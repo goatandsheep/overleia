@@ -1,5 +1,5 @@
 module.exports = {
     BASE_INPUT_MP4_FILENAME: 'video.mp4',
-    INPUT_DIRECTORY: 'test/data/',
+    INPUT_DIRECTORY: '/data/',
     PIP_INPUT_MP4_FILENAME: 'video.mp4'
 };

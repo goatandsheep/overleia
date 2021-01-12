@@ -1,5 +1,6 @@
 const ffmpegMpeg = require('ffmpeg.js/ffmpeg-mp4');
 const ffmpegWebm = require('ffmpeg.js/ffmpeg-webm');
+const fs = require('fs');
 
 /**
  * @param {String} basePath of base video input
@@ -7,20 +8,47 @@ const ffmpegWebm = require('ffmpeg.js/ffmpeg-webm');
  * @param {'mp4' | 'webm'} type of input
  * @param {'TOP_LEFT', 'TOP_RIGHT', 'BOTTOM_LEFT', 'BOTTOM_RIGHT'} gravity
  */
-const PipLib = function(basePath, pipPath, type="mp4", gravity='BOTTOM_RIGHT') {
+const PipLib = function(basePath, pipPath, type="mp4", gravity='TOP_LEFT') {
     let ffmpeg
     if (type === 'webm') {
         ffmpeg = ffmpegWebm
     } else {
         ffmpeg = ffmpegMpeg
     }
+    let xPos
+    let yPos
+    let padHeight = 10
+    let padWidth = 10
+    let baseHeight
+    let baseWidth
+    let overlayHeight
+    let overlayWidth
+    switch(gravity) {
+        case 'TOP_RIGHT':
+            xPos = baseWidth - overlayWidth - padWidth
+            yPos = padHeight
+            break;
+        case 'BOTTOM_LEFT':
+            xPos = padWidth
+            break;
+        case 'BOTTOM_RIGHT':
+            xPos = baseWidth - overlayWidth - padWidth
+            yPos = baseHeight - overlayHeight - padHeight
+            break;
+        case 'TOP_LEFT':
+        default:
+            xPos = padWidth
+            yPos = padHeight
+
+    }
     try {
         ffmpeg({
+            mounts: [{type: "NODEFS", opts: {root: "."}, mountpoint: "/data"}],
             arguments: [
                 "-i",
                 basePath,
                 "-vf",
-                `movie=${pipPath},scale=250: -1 [inner]; [in][inner] overlay =10: 10 [out]" completed.mp4`
+                `movie=${pipPath},scale=250: -1 [inner]; [in][inner] overlay =${xPos}: ${yPos} [out]" /data/completed.mp4`
             ]
         })
     } catch (err) {
