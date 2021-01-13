@@ -1,14 +1,16 @@
 const ffmpegMpeg = require('ffmpeg.js/ffmpeg-mp4');
 const ffmpegWebm = require('ffmpeg.js/ffmpeg-webm');
+// const ffmpeg = require('ffmpeg.js');
 const fs = require('fs');
 
 /**
- * @param {String} basePath of base video input
- * @param {String} pipPath of PIP video input
+ * @param {String} directory of base video input
+ * @param {String} baseFile of base video input
+ * @param {String} pipFile of PIP video input
  * @param {'mp4' | 'webm'} type of input
  * @param {'TOP_LEFT', 'TOP_RIGHT', 'BOTTOM_LEFT', 'BOTTOM_RIGHT'} gravity
  */
-const PipLib = function(basePath, pipPath, type="mp4", gravity='TOP_LEFT') {
+const PipLib = function(directory, baseFile, pipFile, type="mp4", gravity='TOP_LEFT') {
     let ffmpeg
     if (type === 'webm') {
         ffmpeg = ffmpegWebm
@@ -44,14 +46,23 @@ const PipLib = function(basePath, pipPath, type="mp4", gravity='TOP_LEFT') {
     try {
         let stdout = ''
         let stderr = ''
+        const baseData = new Uint8Array(fs.readFileSync(__dirname + directory + baseFile));
+        const pipData = new Uint8Array(fs.readFileSync(__dirname + directory + pipFile));
         ffmpeg({
             mounts: [{type: "NODEFS", opts: {root: "."}, mountpoint: "/data"}],
+            MEMFS: [
+                { name: baseFile, data: baseData },
+                { name: pipFile, data: pipData }
+            ],
             arguments: [
                 "-i",
-                basePath,
+                baseFile,
+                "-i",
+                pipFile,
                 "-vf",
-                `"movie=${pipPath},scale=250: -1 [inner]; [in][inner] overlay =${xPos}: ${yPos} [out]"`,
-                "/data/completed.mp4"
+                `"movie=${pipFile},scale=250:-1[inner];[in][inner]overlay=${xPos}:${yPos}[out]"`,
+                "-y",
+                "completed.mp4"
             ],
             print: (data) => { stdout += data + "\n"; },
             printErr: (data) => { stderr += data + "\n"; },
