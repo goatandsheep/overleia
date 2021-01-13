@@ -27,15 +27,16 @@ const PipLib = function(directory, baseFile, pipFile, type="mp4", gravity='TOP_L
     let overlayWidth = 0
     switch(gravity) {
         case 'TOP_RIGHT':
-            xPos = baseWidth - overlayWidth - padWidth
+            xPos = `main_w-overlay_w-${padWidth}`
             yPos = padHeight
             break;
         case 'BOTTOM_LEFT':
             xPos = padWidth
+            yPos = `main_h-overlay_h-${padHeight}`
             break;
         case 'BOTTOM_RIGHT':
-            xPos = baseWidth - overlayWidth - padWidth
-            yPos = baseHeight - overlayHeight - padHeight
+            xPos = `main_w-overlay_w-${padWidth}`
+            yPos = `main_h-overlay_h-${padHeight}`
             break;
         case 'TOP_LEFT':
         default:
@@ -48,8 +49,8 @@ const PipLib = function(directory, baseFile, pipFile, type="mp4", gravity='TOP_L
         let stderr = ''
         const baseData = new Uint8Array(fs.readFileSync(__dirname + directory + baseFile));
         const pipData = new Uint8Array(fs.readFileSync(__dirname + directory + pipFile));
+        const idealheap = 1024 * 1024 * 1024;
         ffmpeg({
-            mounts: [{type: "NODEFS", opts: {root: "."}, mountpoint: "/data"}],
             MEMFS: [
                 { name: baseFile, data: baseData },
                 { name: pipFile, data: pipData }
@@ -59,8 +60,10 @@ const PipLib = function(directory, baseFile, pipFile, type="mp4", gravity='TOP_L
                 baseFile,
                 "-i",
                 pipFile,
-                "-vf",
-                `"movie=${pipFile},scale=250:-1[inner];[in][inner]overlay=${xPos}:${yPos}[out]"`,
+                "-filter_complex",
+                `[1:v],[0:v]scale=250:-1[scaled_overlay]overlay=${xPos}:${yPos}`,
+                "-preset",
+                "ultrafast",
                 "-y",
                 "completed.mp4"
             ],
@@ -73,6 +76,7 @@ const PipLib = function(directory, baseFile, pipFile, type="mp4", gravity='TOP_L
                     throw stderr;
                 }
             },
+            TOTAL_MEMORY: idealheap,
         })
     } catch (err) {
         throw err
