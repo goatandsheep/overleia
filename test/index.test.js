@@ -7,7 +7,7 @@ describe('basic ffmpeg', () => {
         expect(() => {
             Pip(settings.INPUT_DIRECTORY,
                 settings.BASE_INPUT_MP4_FILENAME,
-                settings.BASE_INPUT_MP4_FILENAME)
+                settings.PIP_INPUT_MP4_FILENAME)
         }).not.toThrow();
     })
 })

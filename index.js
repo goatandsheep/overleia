@@ -50,7 +50,7 @@ const PipLib = function(directory, baseFile, pipFile, type="mp4", gravity='TOP_L
         const baseData = new Uint8Array(fs.readFileSync(__dirname + directory + baseFile));
         const pipData = new Uint8Array(fs.readFileSync(__dirname + directory + pipFile));
         const idealheap = 1024 * 1024 * 1024;
-        ffmpeg({
+        const result = ffmpeg({
             MEMFS: [
                 { name: baseFile, data: baseData },
                 { name: pipFile, data: pipData }
@@ -72,12 +72,12 @@ const PipLib = function(directory, baseFile, pipFile, type="mp4", gravity='TOP_L
             onExit: (code) => {
                 console.log("Process exited with code " + code);
                 console.log(stdout);
-                if (stderr) {
-                    throw stderr;
-                }
+                console.error(stderr)
             },
             TOTAL_MEMORY: idealheap,
         })
+        const out = result.MEMFS[0];
+        fs.writeFileSync(__dirname + directory + out.name, out.data)
     } catch (err) {
         throw err
     }
