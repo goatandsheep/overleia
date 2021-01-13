@@ -15,14 +15,14 @@ const PipLib = function(basePath, pipPath, type="mp4", gravity='TOP_LEFT') {
     } else {
         ffmpeg = ffmpegMpeg
     }
-    let xPos
-    let yPos
+    let xPos = 0
+    let yPos = 0
     let padHeight = 10
     let padWidth = 10
-    let baseHeight
-    let baseWidth
-    let overlayHeight
-    let overlayWidth
+    let baseHeight = 0
+    let baseWidth = 0
+    let overlayHeight = 0
+    let overlayWidth = 0
     switch(gravity) {
         case 'TOP_RIGHT':
             xPos = baseWidth - overlayWidth - padWidth
