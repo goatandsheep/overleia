@@ -1,5 +1,5 @@
 {
-  "name": "pip",
+  "name": "overleia",
   "version": "1.0.0",
   "description": "Simplified picture-in-picture library for Node JS",
   "main": "index.js",
