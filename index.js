@@ -1,14 +1,16 @@
 const ffmpegMpeg = require('ffmpeg.js/ffmpeg-mp4');
 const ffmpegWebm = require('ffmpeg.js/ffmpeg-webm');
+// const ffmpeg = require('ffmpeg.js');
 const fs = require('fs');
 
 /**
- * @param {String} basePath of base video input
- * @param {String} pipPath of PIP video input
+ * @param {String} directory of base video input
+ * @param {String} baseFile of base video input
+ * @param {String} pipFile of PIP video input
  * @param {'mp4' | 'webm'} type of input
  * @param {'TOP_LEFT', 'TOP_RIGHT', 'BOTTOM_LEFT', 'BOTTOM_RIGHT'} gravity
  */
-const PipLib = function(basePath, pipPath, type="mp4", gravity='TOP_LEFT') {
+const PipLib = function(directory, baseFile, pipFile, type="mp4", gravity='TOP_LEFT') {
     let ffmpeg
     if (type === 'webm') {
         ffmpeg = ffmpegWebm
@@ -25,15 +27,16 @@ const PipLib = function(basePath, pipPath, type="mp4", gravity='TOP_LEFT') {
     let overlayWidth = 0
     switch(gravity) {
         case 'TOP_RIGHT':
-            xPos = baseWidth - overlayWidth - padWidth
+            xPos = `main_w-overlay_w-${padWidth}`
             yPos = padHeight
             break;
         case 'BOTTOM_LEFT':
             xPos = padWidth
+            yPos = `main_h-overlay_h-${padHeight}`
             break;
         case 'BOTTOM_RIGHT':
-            xPos = baseWidth - overlayWidth - padWidth
-            yPos = baseHeight - overlayHeight - padHeight
+            xPos = `main_w-overlay_w-${padWidth}`
+            yPos = `main_h-overlay_h-${padHeight}`
             break;
         case 'TOP_LEFT':
         default:
@@ -44,25 +47,37 @@ const PipLib = function(basePath, pipPath, type="mp4", gravity='TOP_LEFT') {
     try {
         let stdout = ''
         let stderr = ''
-        ffmpeg({
-            mounts: [{type: "NODEFS", opts: {root: "."}, mountpoint: "/data"}],
+        const baseData = new Uint8Array(fs.readFileSync(__dirname + directory + baseFile));
+        const pipData = new Uint8Array(fs.readFileSync(__dirname + directory + pipFile));
+        const idealheap = 1024 * 1024 * 1024;
+        const result = ffmpeg({
+            MEMFS: [
+                { name: baseFile, data: baseData },
+                { name: pipFile, data: pipData }
+            ],
             arguments: [
                 "-i",
-                basePath,
-                "-vf",
-                `"movie=${pipPath},scale=250: -1 [inner]; [in][inner] overlay =${xPos}: ${yPos} [out]"`,
-                "/data/completed.mp4"
+                baseFile,
+                "-i",
+                pipFile,
+                "-filter_complex",
+                `[1:v]scale=250:-1[scaled_overlay],[0:v][scaled_overlay]overlay=${xPos}:${yPos}`,
+                "-preset",
+                "ultrafast",
+                "-y",
+                "completed.mp4"
             ],
             print: (data) => { stdout += data + "\n"; },
             printErr: (data) => { stderr += data + "\n"; },
             onExit: (code) => {
                 console.log("Process exited with code " + code);
                 console.log(stdout);
-                if (stderr) {
-                    throw stderr;
-                }
+                console.error(stderr)
             },
+            TOTAL_MEMORY: idealheap,
         })
+        const out = result.MEMFS[0];
+        fs.writeFileSync(__dirname + directory + out.name, out.data)
     } catch (err) {
         throw err
     }
