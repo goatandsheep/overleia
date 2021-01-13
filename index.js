@@ -61,7 +61,7 @@ const PipLib = function(directory, baseFile, pipFile, type="mp4", gravity='TOP_L
                 "-i",
                 pipFile,
                 "-filter_complex",
-                `[1:v],[0:v]scale=250:-1[scaled_overlay]overlay=${xPos}:${yPos}`,
+                `[1:v]scale=250:-1[scaled_overlay],[0:v][scaled_overlay]overlay=${xPos}:${yPos}`,
                 "-preset",
                 "ultrafast",
                 "-y",
