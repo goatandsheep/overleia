@@ -42,14 +42,26 @@ const PipLib = function(basePath, pipPath, type="mp4", gravity='TOP_LEFT') {
 
     }
     try {
+        let stdout = ''
+        let stderr = ''
         ffmpeg({
             mounts: [{type: "NODEFS", opts: {root: "."}, mountpoint: "/data"}],
             arguments: [
                 "-i",
                 basePath,
                 "-vf",
-                `movie=${pipPath},scale=250: -1 [inner]; [in][inner] overlay =${xPos}: ${yPos} [out]" /data/completed.mp4`
-            ]
+                `"movie=${pipPath},scale=250: -1 [inner]; [in][inner] overlay =${xPos}: ${yPos} [out]"`,
+                "/data/completed.mp4"
+            ],
+            print: (data) => { stdout += data + "\n"; },
+            printErr: (data) => { stderr += data + "\n"; },
+            onExit: (code) => {
+                console.log("Process exited with code " + code);
+                console.log(stdout);
+                if (stderr) {
+                    throw stderr;
+                }
+            },
         })
     } catch (err) {
         throw err
