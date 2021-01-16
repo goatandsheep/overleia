@@ -4,6 +4,33 @@ const ffmpegWebm = require('ffmpeg.js/ffmpeg-webm');
 const fs = require('fs');
 
 /**
+ * @typedef {object} ViewInput
+ * @property {Number} x
+ * @property {Number} y
+ * @property {Number} height
+ * @property {Number} [width] optional to maintain ratio
+ */
+
+/**
+ * @typedef {object} TemplateInput
+ * @property {Number} height
+ * @property {Number} [width] optional to maintain ratio
+ * @property {ViewInput[]} views
+ */
+
+/**
+ * @typedef {object} OverleiaInput
+ * @property {String[]} inputs - file paths
+ * @property {TemplateInput} template
+ * @property {String} [filetype="mp4"]
+ */
+
+/**
+ * @param {OverleiaInput} params
+ * @param {String} directory - maximum 1 slash
+ */
+
+/**
  * @param {String} directory of base video input
  * @param {String} baseFile of base video input
  * @param {String} pipFile of PIP video input
