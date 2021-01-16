@@ -26,6 +26,7 @@ const fs = require('fs');
 
 /**
  * @param {OverleiaInput} params
+ * @param {String} directory - maximum 1 slash
  */
 
 /**
