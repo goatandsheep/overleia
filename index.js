@@ -47,13 +47,14 @@ const PipLib = function(params, directory) {
         let data = []
         let inputArgs = []
 
-        // let inputMediaString = `[1:v]scale=${pipHeight}:-1[scaled_overlay],[0:v][scaled_overlay]overlay=${xPos}:${yPos}`
+        // let inputMediaString = `[1:v]scale=-1:${pipHeight}[scaled_overlay],[0:v][scaled_overlay]overlay=${yPos}:${xPos}`
         if (!params.template.height) {
             throw new Error("No scene height set")
         }
         let sceneWidth = params.template.width || (params.template.height * 16 / 9)
         console.log('sceneWidth', sceneWidth)
-        let inputMediaString = `pad=${params.template.height}:${sceneWidth}:(ow-iw)/2:(oh-ih)/2[base];`
+        // let inputMediaString = `pad=${params.template.height}:${sceneWidth}:0:0:black[base];`
+        let inputMediaString = ""
         let mergeStrings = []
         for (let i = 0, len = params.inputs.length; i < len; i++) {
             const arr = new Uint8Array(fs.readFileSync(__dirname + directory + params.inputs[i]))
@@ -64,14 +65,21 @@ const PipLib = function(params, directory) {
             inputArgs.push('-i')
             inputArgs.push(params.inputs[i])
             let layerWidth = params.template.views[i].width || -1
-            inputMediaString = inputMediaString.concat(`[${i}:v]setpts=PTS-STARTPTS,scale=${params.template.views[i].height}:${layerWidth}[layer_${i}];`)
-            mergeStrings.push(`[layer_${i}]overlay=${params.template.views[i].x}:${params.template.views[i].y}`)
+            console.log('layerWidth', layerWidth)
+            // inputMediaString = inputMediaString.concat(`[${i}:v]setpts=PTS-STARTPTS,scale=${layerWidth}:${params.template.views[i].height}[layer_${i}];`)
+            inputMediaString = inputMediaString.concat(`[${i}:v]scale=${layerWidth}:${params.template.views[i].height}[layer_${i}];`)
+            mergeStrings.push(`[layer_${i}]overlay=${params.template.views[i].y}:${params.template.views[i].x}`)
         }
-        for (let i = 0, len = mergeStrings.length; i < len; i++) {
+        // for (let i = 0, len = mergeStrings.length; i < len; i++) {
+        for (let i = 1, len = mergeStrings.length; i < len; i++) {
             let prefix = ''
             let suffix = `[tmp${i + 1}]`
             if (i === 0) {
-                prefix = '[base]'
+                // prefix = '[base]'
+                prefix = ''
+            } else if (i === 1) {
+                // remove if pad re-added
+                prefix = '[layer_0]'
             } else {
                 prefix = `[tmp${i}]`
             }
@@ -80,14 +88,20 @@ const PipLib = function(params, directory) {
             }
             inputMediaString = inputMediaString.concat(prefix + mergeStrings[i] + suffix + ';')
         }
-        console.log('input media string', inputMediaString)
+        inputMediaString = inputMediaString.slice(0,-1)
+        // inputMediaString = '"' + inputMediaString + '"'
+        console.log('inputMediaString', inputMediaString)
 
         inputArgs.push("-filter_complex")
         inputArgs.push(inputMediaString)
-        inputArgs.push('-preset')
-        inputArgs.push('ultrafast')
+        if (params.filetype !== 'webm') {
+            inputArgs.push('-preset')
+            inputArgs.push('ultrafast')
+        }
         inputArgs.push('-y')
         inputArgs.push('completed.mp4')
+
+        console.log('inputArgs', inputArgs)
 
         const idealheap = 1024 * 1024 * 1024;
         const result = ffmpeg({
