@@ -37,8 +37,8 @@ const PipLib = function(params, directory) {
         ffmpeg = ffmpegMpeg
     }
 
-    let xPos = params.template.views[0].x
-    let yPos = params.template.views[0].y
+    let xPos = params.template.views[1].x
+    let yPos = params.template.views[1].y
 
     try {
         let stdout = ''
