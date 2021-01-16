@@ -15,12 +15,12 @@ describe('basic ffmpeg', () => {
                             {
                                 x: 0,
                                 y: 0,
-                                hieght: 7200
+                                height: 7200
                             },
                             {
                                 x: 10,
                                 y: 10,
-                                hieght: 250
+                                height: 250
                             }
                         ]
                     }
