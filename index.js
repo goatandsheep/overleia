@@ -44,15 +44,16 @@ const PipLib = function(params, directory) {
     try {
         let stdout = ''
         let stderr = ''
-        let data = []
-        data.push(new Uint8Array(fs.readFileSync(__dirname + directory + params.inputs[0])));
-        data.push(new Uint8Array(fs.readFileSync(__dirname + directory + params.inputs[1])));
+        let data = params.inputs.map(input => {
+            const arr = new Uint8Array(fs.readFileSync(__dirname + directory + input))
+            return {
+                name: input,
+                data: arr
+            }
+        })
         const idealheap = 1024 * 1024 * 1024;
         const result = ffmpeg({
-            MEMFS: [
-                { name: params.inputs[0], data: data[0] },
-                { name: params.inputs[1], data: data[1] }
-            ],
+            MEMFS: data,
             arguments: [
                 "-i",
                 params.inputs[0],
