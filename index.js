@@ -22,6 +22,7 @@ const fs = require('fs');
  * @typedef {object} OverleiaInput
  * @property {String[]} inputs - file paths
  * @property {TemplateInput} template
+ * @property {String} [filetype="mp4"]
  */
 
 /**
