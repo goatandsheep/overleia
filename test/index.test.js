@@ -15,7 +15,7 @@ describe('basic ffmpeg', () => {
                             {
                                 x: 0,
                                 y: 0,
-                                height: 7200
+                                height: 720
                             },
                             {
                                 x: 10,
