@@ -29,66 +29,36 @@ const fs = require('fs');
  * @param {OverleiaInput} params
  * @param {String} directory - maximum 1 slash
  */
-
-/**
- * @param {String} directory of base video input
- * @param {String} baseFile of base video input
- * @param {String} pipFile of PIP video input
- * @param {'mp4' | 'webm'} type of input
- * @param {'TOP_LEFT', 'TOP_RIGHT', 'BOTTOM_LEFT', 'BOTTOM_RIGHT'} gravity
- */
-const PipLib = function(directory, baseFile, pipFile, type="mp4", gravity='TOP_LEFT') {
+const PipLib = function(params, directory) {
     let ffmpeg
-    if (type === 'webm') {
+    if (params.filetype === 'webm') {
         ffmpeg = ffmpegWebm
     } else {
         ffmpeg = ffmpegMpeg
     }
-    let xPos = 0
-    let yPos = 0
-    let padHeight = 10
-    let padWidth = 10
-    let baseHeight = 0
-    let baseWidth = 0
-    let overlayHeight = 0
-    let overlayWidth = 0
-    switch(gravity) {
-        case 'TOP_RIGHT':
-            xPos = `main_w-overlay_w-${padWidth}`
-            yPos = padHeight
-            break;
-        case 'BOTTOM_LEFT':
-            xPos = padWidth
-            yPos = `main_h-overlay_h-${padHeight}`
-            break;
-        case 'BOTTOM_RIGHT':
-            xPos = `main_w-overlay_w-${padWidth}`
-            yPos = `main_h-overlay_h-${padHeight}`
-            break;
-        case 'TOP_LEFT':
-        default:
-            xPos = padWidth
-            yPos = padHeight
 
-    }
+    let xPos = params.template.views[1].x
+    let yPos = params.template.views[1].y
+    let pipHeight = params.template.views[1].height
+
     try {
         let stdout = ''
         let stderr = ''
-        const baseData = new Uint8Array(fs.readFileSync(__dirname + directory + baseFile));
-        const pipData = new Uint8Array(fs.readFileSync(__dirname + directory + pipFile));
+        const baseData = new Uint8Array(fs.readFileSync(__dirname + directory + params.inputs[0]));
+        const pipData = new Uint8Array(fs.readFileSync(__dirname + directory + params.inputs[1]));
         const idealheap = 1024 * 1024 * 1024;
         const result = ffmpeg({
             MEMFS: [
-                { name: baseFile, data: baseData },
-                { name: pipFile, data: pipData }
+                { name: params.inputs[0], data: baseData },
+                { name: params.inputs[1], data: pipData }
             ],
             arguments: [
                 "-i",
-                baseFile,
+                params.inputs[0],
                 "-i",
-                pipFile,
+                params.inputs[1],
                 "-filter_complex",
-                `[1:v]scale=250:-1[scaled_overlay],[0:v][scaled_overlay]overlay=${xPos}:${yPos}`,
+                `[1:v]scale=${pipHeight}:-1[scaled_overlay],[0:v][scaled_overlay]overlay=${xPos}:${yPos}`,
                 "-preset",
                 "ultrafast",
                 "-y",
