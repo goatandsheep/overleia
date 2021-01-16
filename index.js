@@ -39,6 +39,7 @@ const PipLib = function(params, directory) {
 
     let xPos = params.template.views[1].x
     let yPos = params.template.views[1].y
+    let pipHeight = params.template.views[1].height
 
     try {
         let stdout = ''
@@ -57,7 +58,7 @@ const PipLib = function(params, directory) {
                 "-i",
                 params.inputs[1],
                 "-filter_complex",
-                `[1:v]scale=250:-1[scaled_overlay],[0:v][scaled_overlay]overlay=${xPos}:${yPos}`,
+                `[1:v]scale=${pipHeight}:-1[scaled_overlay],[0:v][scaled_overlay]overlay=${xPos}:${yPos}`,
                 "-preset",
                 "ultrafast",
                 "-y",
