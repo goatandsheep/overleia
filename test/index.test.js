@@ -22,7 +22,8 @@ describe('basic ffmpeg', () => {
                                 y: 10,
                                 height: 250
                             }
-                        ]
+                        ],
+                        height: 720
                     }
                 },
                 settings.INPUT_DIRECTORY
