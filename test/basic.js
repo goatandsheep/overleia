@@ -12,8 +12,8 @@ Pip({
         views: [
             {
                 x: 0,
-                y: 0,
-                height: 720
+                y: 100,
+                height: 620
             },
             {
                 x: 10,
