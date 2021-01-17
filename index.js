@@ -1,5 +1,6 @@
 const ffmpegMpeg = require('ffmpeg.js/ffmpeg-mp4');
 const ffmpegWebm = require('ffmpeg.js/ffmpeg-webm');
+const { createFFmpeg, fetchFile} = require('@ffmpeg/ffmpeg')
 // const ffmpeg = require('ffmpeg.js');
 const fs = require('fs');
 
@@ -30,22 +31,11 @@ const fs = require('fs');
  * @param {String} directory - maximum 1 slash
  */
 const PipLib = function(params, directory) {
-    let ffmpeg
-    if (params.filetype === 'webm') {
-        ffmpeg = ffmpegWebm
-    } else {
-        ffmpeg = ffmpegMpeg
-    }
-
-    let xPos = params.template.views[1].x
-    let yPos = params.template.views[1].y
-    let pipHeight = params.template.views[1].height
 
     try {
-        let stdout = ''
-        let stderr = ''
         let data = []
         let inputArgs = []
+        const outputFile = 'completed'
 
         // let inputMediaString = `[1:v]scale=-1:${pipHeight}[scaled_overlay],[0:v][scaled_overlay]overlay=${yPos}:${xPos}`
         if (!params.template.height) {
@@ -105,16 +95,48 @@ const PipLib = function(params, directory) {
         inputArgs.push('completed.mp4')
 
         console.log('inputArgs', inputArgs)
+        const inputArgz = [
+            '-filters'
+        ]
 
-        const out = FfmpegProcess(data, inputArgs, true)
-        fs.writeFileSync(__dirname + directory + out.name, out.data)
+        // const out = FfmpegProcess(data, inputArgs, true)
+        // fs.writeFileSync(__dirname + directory + outputFile + '.' + (params.filetype || 'mp4'), out)
+        FfmpegProcessWasm(data, inputArgz, true).then((out) => {
+            fs.promises.writeFile(__dirname + directory + outputFile + '.' + (params.filetype || 'mp4'), out)
+            // process.exit(0)
+        }).catch(err => {throw err})
     } catch (err) {
         throw err
     }
 }
 
-const FfmpegProcess = function(data, inputArgs, verbose=false) {
+const FfmpegProcessWasm = async function(data, inputArgs, verbose=false) {
     try {
+        const ffmpeg = createFFmpeg({ log: verbose })
+        
+        await ffmpeg.load();
+        data.forEach((entry) => {
+            ffmpeg.FS('writeFile', entry.name, entry.data);
+        })
+        await ffmpeg.run(...inputArgs);
+        const result = await ffmpeg.FS('readFile', 'completed.mp4');
+        // process.exit(0);
+        return result
+    } catch (err) {
+        throw err
+    }
+}
+
+const FfmpegProcess = function(data, inputArgs, verbose=false, filetype='mp4') {
+    try {
+        let ffmpeg
+        if (params.filetype === 'webm') {
+            ffmpeg = ffmpegWebm
+        } else {
+            ffmpeg = ffmpegMpeg
+        }
+        let stdout = ''
+        let stderr = ''
         const idealheap = 1024 * 1024 * 1024;
         const result = ffmpeg({
             MEMFS: data,
@@ -130,7 +152,7 @@ const FfmpegProcess = function(data, inputArgs, verbose=false) {
             },
             TOTAL_MEMORY: idealheap,
         })
-        return result.MEMFS[0]
+        return result.MEMFS[0].data
     } catch (err) {
         throw err
     }
