@@ -51,6 +51,9 @@ const PipLib = function(params, directory) {
         if (!params.template.height) {
             throw new Error("No scene height set")
         }
+        if (params.inputs.length < params.inputs.views) {
+            throw new Error("Not enough input files")
+        }
         let sceneWidth = params.template.width || (params.template.height * 16 / 9)
         console.log('sceneWidth', sceneWidth)
         // let inputMediaString = `pad=${params.template.height}:${sceneWidth}:0:0:black[base];`
