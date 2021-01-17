@@ -25,6 +25,7 @@ const fs = require('fs');
  * @property {String[]} inputs - file paths
  * @property {TemplateInput} template
  * @property {String} [filetype="mp4"]
+ * @property {Boolean} verbose
  */
 
 /**
@@ -62,7 +63,6 @@ const PipLib = function(params, directory) {
             inputArgs.push(params.inputs[i])
             let layerWidth = params.template.views[i].width || -1
             let layerDelay = params.template.views[i].delay || i
-            console.log('layerWidth', layerWidth)
             // inputMediaString = inputMediaString.concat(`[${i}:v]setpts=PTS-STARTPTS+${layerDelay}/TB,scale=${layerWidth}:${params.template.views[i].height}[layer_${i}];`)
             inputMediaString = inputMediaString.concat(`[${i}:v]setpts=PTS-STARTPTS+${layerDelay}/TB,scale=${layerWidth}:${params.template.views[i].height}`)
             // inputMediaString = inputMediaString.concat(`[${i}:v]scale=${layerWidth}:${params.template.views[i].height}[layer_${i}];`)
@@ -95,7 +95,6 @@ const PipLib = function(params, directory) {
             inputMediaString = inputMediaString.concat(prefix + mergeStrings[i] + suffix)
         }
         inputMediaString = inputMediaString.concat(`${audioString}amix=inputs=${inputsNum}[aout]`)
-        // inputMediaString = '"' + inputMediaString + '"'
         console.log('inputMediaString', inputMediaString)
 
         inputArgs.push("-filter_complex")
@@ -114,16 +113,16 @@ const PipLib = function(params, directory) {
         inputArgs.push('-y')
         inputArgs.push('completed.mp4')
 
-        console.log('inputArgs', inputArgs)
-        // const inputArgz = [
-        //     '-filters'
-        // ]
+        if (params.verbose) {
+            console.log('inputArgs', inputArgs)
+        }
 
         // const out = FfmpegProcess(data, inputArgs, true)
         // fs.writeFileSync(__dirname + directory + outputFile + '.' + (params.filetype || 'mp4'), out)
         FfmpegProcessWasm(data, inputArgs, true).then((out) => {
-            fs.promises.writeFile(__dirname + directory + outputFile + '.' + (params.filetype || 'mp4'), out)
-            // process.exit(0)
+            fs.promises.writeFile(__dirname + directory + outputFile + '.' + (params.filetype || 'mp4'), out).then((res) => {
+                process.exit(0)
+            }).catch(err => {throw err})
         }).catch(err => {throw err})
     } catch (err) {
         throw err
@@ -140,7 +139,6 @@ const FfmpegProcessWasm = async function(data, inputArgs, verbose=false) {
         })
         await ffmpeg.run(...inputArgs);
         const result = await ffmpeg.FS('readFile', 'completed.mp4');
-        // process.exit(0);
         return result
     } catch (err) {
         throw err
