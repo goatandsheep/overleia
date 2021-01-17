@@ -4,6 +4,7 @@
   "description": "Simplified picture-in-picture library for Node JS",
   "main": "index.js",
   "scripts": {
+    "next": "node --experimental-wasm-threads --experimental-wasm-bulk-memory test/basic.js",
     "lint": "xo",
     "lint:fix": "xo --fix",
     "test": "jest"
@@ -33,6 +34,8 @@
     "xo": "^0.37.1"
   },
   "dependencies": {
+    "@ffmpeg/core": "^0.8.5",
+    "@ffmpeg/ffmpeg": "^0.9.7",
     "ffmpeg.js": "^4.2.9003"
   }
 }
