@@ -106,6 +106,15 @@ const PipLib = function(params, directory) {
 
         console.log('inputArgs', inputArgs)
 
+        const out = FfmpegProcess(data, inputArgs, true)
+        fs.writeFileSync(__dirname + directory + out.name, out.data)
+    } catch (err) {
+        throw err
+    }
+}
+
+const FfmpegProcess = function(data, inputArgs, verbose=false) {
+    try {
         const idealheap = 1024 * 1024 * 1024;
         const result = ffmpeg({
             MEMFS: data,
@@ -113,14 +122,15 @@ const PipLib = function(params, directory) {
             print: (data) => { stdout += data + "\n"; },
             printErr: (data) => { stderr += data + "\n"; },
             onExit: (code) => {
-                console.log("Process exited with code " + code);
-                console.log(stdout);
-                console.error(stderr)
+                if (verbose) {
+                    console.log("Process exited with code " + code);
+                    console.log(stdout);
+                    console.error(stderr)
+                }
             },
             TOTAL_MEMORY: idealheap,
         })
-        const out = result.MEMFS[0];
-        fs.writeFileSync(__dirname + directory + out.name, out.data)
+        return result.MEMFS[0]
     } catch (err) {
         throw err
     }
