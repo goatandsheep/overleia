@@ -35,7 +35,6 @@
   },
   "dependencies": {
     "@ffmpeg/core": "^0.8.5",
-    "@ffmpeg/ffmpeg": "^0.9.7",
-    "ffmpeg.js": "^4.2.9003"
+    "@ffmpeg/ffmpeg": "^0.9.7"
   }
 }
