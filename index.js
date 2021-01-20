@@ -58,7 +58,7 @@ const PipLib = function(params, directory) {
             inputArgs.push('-i')
             inputArgs.push(params.inputs[i])
             let layerWidth = params.template.views[i].width || -1
-            let layerDelay = params.template.views[i].delay || i
+            let layerDelay = params.template.views[i].delay || 0
             // inputMediaString = inputMediaString.concat(`[${i}:v]setpts=PTS-STARTPTS+${layerDelay}/TB,scale=${layerWidth}:${params.template.views[i].height}[layer_${i}];`)
             inputMediaString = inputMediaString.concat(`[${i}:v]setpts=PTS-STARTPTS+${layerDelay}/TB,scale=${layerWidth}:${params.template.views[i].height}`)
             // inputMediaString = inputMediaString.concat(`[${i}:v]scale=${layerWidth}:${params.template.views[i].height}[layer_${i}];`)
