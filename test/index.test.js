@@ -1,4 +1,5 @@
 const Pip = require('../index');
+const path = require('path');
 
 const settings = require('./settings');
 
@@ -26,7 +27,7 @@ describe('basic ffmpeg', () => {
                         height: 720
                     }
                 },
-                settings.INPUT_DIRECTORY
+                path.join(__dirname, '..', settings.INPUT_DIRECTORY)
             )
         }).not.toThrow();
     })
@@ -65,7 +66,7 @@ describe('basic ffmpeg', () => {
                         height: 720
                     }
                 },
-                settings.INPUT_DIRECTORY
+                path.join(__dirname, '..', settings.INPUT_DIRECTORY)
             )
         }).not.toThrow();
     })

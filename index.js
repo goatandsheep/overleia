@@ -50,7 +50,7 @@ const PipLib = function(params, directory) {
         let mergeStrings = []
         let audioString = ''
         for (let i = 0, len = inputsNum; i < len; i++) {
-            const arr = new Uint8Array(fs.readFileSync(__dirname + directory + params.inputs[i]))
+            const arr = new Uint8Array(fs.readFileSync(directory + params.inputs[i]))
             data.push({
                 name: params.inputs[i],
                 data: arr
@@ -113,7 +113,7 @@ const PipLib = function(params, directory) {
         }
 
         FfmpegProcessWasm(data, inputArgs, true).then((out) => {
-            fs.promises.writeFile(__dirname + directory + outputFile + '.' + (params.filetype || 'mp4'), out).then((res) => {
+            fs.promises.writeFile(directory + outputFile + '.' + (params.filetype || 'mp4'), out).then((res) => {
                 process.exit(0)
             }).catch(err => {throw err})
         }).catch(err => {throw err})
