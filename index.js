@@ -29,7 +29,7 @@ const fs = require('fs');
  * @param {OverleiaInput} params
  * @param {String} directory - maximum 1 slash
  */
-const PipLib = function(params, directory) {
+const PipLib = async function(params, directory) {
 
     try {
         let data = []
@@ -112,11 +112,8 @@ const PipLib = function(params, directory) {
             console.log('inputArgs', inputArgs)
         }
 
-        FfmpegProcessWasm(data, inputArgs, true).then((out) => {
-            fs.promises.writeFile('/data/' + outputFile, out).then((res) => {
-                process.exit(0)
-            }).catch(err => {throw err})
-        }).catch(err => {throw err})
+        await FfmpegProcessWasm(data, inputArgs, true)
+        return fs.promises.writeFile('/data/' + outputFile, out)
     } catch (err) {
         throw err
     }
