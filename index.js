@@ -113,7 +113,7 @@ const PipLib = async function(params, directory) {
         }
 
         const out = await FfmpegProcessWasm(data, inputArgs, outputFile, true)
-        return fs.promises.writeFile('/data/' + outputFile, out)
+        return fs.promises.writeFile('./data/' + outputFile, out)
     } catch (err) {
         throw err
     }
@@ -130,7 +130,7 @@ const FfmpegProcessWasm = async function(data, inputArgs, outputFile, verbose=fa
             ffmpeg.FS('writeFile', entry.name, JSON.stringify(entry.data));
         })
         await ffmpeg.run(...inputArgs);
-        return ffmpeg.FS('readFile', '/data/' + outputFile);
+        return ffmpeg.FS('readFile', './data/' + outputFile);
     } catch (err) {
         throw err
     }
