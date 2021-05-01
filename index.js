@@ -35,7 +35,7 @@ const PipLib = function(params, directory) {
         let data = []
         let inputArgs = []
         let inputsNum = params.inputs.length
-        const outputFile = 'completed'
+        const outputFile = (params.outputFile || 'completed') + (params.filetype || 'mp4')
 
         if (!params.template.height) {
             throw new Error("No scene height set")
@@ -106,14 +106,14 @@ const PipLib = function(params, directory) {
             inputArgs.push('ultrafast')
         }
         inputArgs.push('-y')
-        inputArgs.push('completed.mp4')
+        inputArgs.push(outputFile)
 
         if (params.verbose) {
             console.log('inputArgs', inputArgs)
         }
 
         FfmpegProcessWasm(data, inputArgs, true).then((out) => {
-            fs.promises.writeFile(directory + outputFile + '.' + (params.filetype || 'mp4'), out).then((res) => {
+            fs.promises.writeFile('/data/' + outputFile, out).then((res) => {
                 process.exit(0)
             }).catch(err => {throw err})
         }).catch(err => {throw err})
@@ -124,6 +124,8 @@ const PipLib = function(params, directory) {
 
 const FfmpegProcessWasm = async function(data, inputArgs, verbose=false) {
     try {
+        // TODO: logger: () => {}
+        // TODO: progress: () => {}
         const ffmpeg = createFFmpeg({ log: verbose })
         
         await ffmpeg.load();
@@ -131,8 +133,7 @@ const FfmpegProcessWasm = async function(data, inputArgs, verbose=false) {
             ffmpeg.FS('writeFile', entry.name, entry.data);
         })
         await ffmpeg.run(...inputArgs);
-        const result = await ffmpeg.FS('readFile', 'completed.mp4');
-        return result
+        return ffmpeg.FS('readFile', '/data/' + outputFile);
     } catch (err) {
         throw err
     }
