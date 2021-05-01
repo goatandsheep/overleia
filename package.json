@@ -11,7 +11,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/goatandsheep/node-pip.git"
+    "url": "git+https://github.com/goatandsheep/overleia.git"
   },
   "keywords": [
     "asl",
@@ -25,7 +25,7 @@
   "author": "Kemal Ahmed",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/goatandsheep/node-pip/issues"
+    "url": "https://github.com/goatandsheep/overleia/issues"
   },
   "homepage": "https://github.com/goatandsheep/node-pip#readme",
   "devDependencies": {

@@ -112,14 +112,14 @@ const PipLib = async function(params, directory) {
             console.log('inputArgs', inputArgs)
         }
 
-        await FfmpegProcessWasm(data, inputArgs, true)
+        await FfmpegProcessWasm(data, inputArgs, outputFile, true)
         return fs.promises.writeFile('/data/' + outputFile, out)
     } catch (err) {
         throw err
     }
 }
 
-const FfmpegProcessWasm = async function(data, inputArgs, verbose=false) {
+const FfmpegProcessWasm = async function(data, inputArgs, outputFile, verbose=false) {
     try {
         // TODO: logger: () => {}
         // TODO: progress: () => {}
