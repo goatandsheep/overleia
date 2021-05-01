@@ -5,8 +5,8 @@ const settings = require('./settings');
 
 describe('basic ffmpeg', () => {
     it('should process an MP4 file', () => {
-        expect(() => {
-            Pip({
+        expect(async () => {
+            await Pip({
                     inputs: [
                         settings.BASE_INPUT_MP4_FILENAME,
                         settings.PIP_INPUT_MP4_FILENAME
@@ -32,8 +32,8 @@ describe('basic ffmpeg', () => {
         }).not.toThrow();
     })
     it('should process 4 videos', () => {
-        expect(() => {
-            Pip({
+        expect(async () => {
+            await Pip({
                     inputs: [
                         settings.BASE_INPUT_MP4_FILENAME,
                         settings.PIP_INPUT_MP4_FILENAME,
