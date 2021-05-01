@@ -35,7 +35,7 @@ const PipLib = async function(params, directory) {
         let data = []
         let inputArgs = []
         let inputsNum = params.inputs.length
-        const outputFile = (params.outputFile || 'completed') + (params.filetype || 'mp4')
+        const outputFile = (params.outputFile || 'completed') + '.' + (params.filetype || 'mp4')
 
         if (!params.template.height) {
             throw new Error("No scene height set")
