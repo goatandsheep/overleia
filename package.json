@@ -1,6 +1,6 @@
 {
   "name": "overleia",
-  "version": "2.0.7",
+  "version": "2.0.8",
   "description": "Simplified picture-in-picture library for Node JS",
   "main": "index.js",
   "scripts": {
