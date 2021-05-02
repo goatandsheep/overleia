@@ -1,16 +1,19 @@
 const Pip = require('../index');
 const path = require('path');
+const fs = require('fs').promises;
 
 const settings = require('./settings');
 
 describe('basic ffmpeg', () => {
     it('should process an MP4 file', () => {
         expect(async () => {
+            const inputProms = [
+                fs.readFile(path.join(__dirname, '..', settings.INPUT_DIRECTORY, settings.BASE_INPUT_MP4_FILENAME)),
+                fs.readFile(path.join(__dirname, '..', settings.INPUT_DIRECTORY, settings.PIP_INPUT_MP4_FILENAME))
+            ]
+            const inputs = await Promise.all(inputProms)
             await Pip({
-                    inputs: [
-                        settings.BASE_INPUT_MP4_FILENAME,
-                        settings.PIP_INPUT_MP4_FILENAME
-                    ],
+                    inputs,
                     template: {
                         views: [
                             {
@@ -27,13 +30,19 @@ describe('basic ffmpeg', () => {
                         height: 720
                     },
                     verbose: true
-                },
-                path.join(__dirname, '..', settings.INPUT_DIRECTORY)
+                }
             )
         }).not.toThrow();
     })
     it('should process 4 videos', () => {
         expect(async () => {
+            const inputProms = [
+                fs.readFile(path.join(__dirname, '..', settings.INPUT_DIRECTORY, settings.BASE_INPUT_MP4_FILENAME)),
+                fs.readFile(path.join(__dirname, '..', settings.INPUT_DIRECTORY, settings.PIP_INPUT_MP4_FILENAME)),
+                fs.readFile(path.join(__dirname, '..', settings.INPUT_DIRECTORY, settings.BASE_INPUT_MP4_FILENAME)),
+                fs.readFile(path.join(__dirname, '..', settings.INPUT_DIRECTORY, settings.PIP_INPUT_MP4_FILENAME))
+            ]
+            const inputs = await Promise.all(inputProms)
             await Pip({
                     inputs: [
                         settings.BASE_INPUT_MP4_FILENAME,
@@ -67,8 +76,7 @@ describe('basic ffmpeg', () => {
                         height: 720
                     },
                     verbose: true
-                },
-                path.join(__dirname, '..', settings.INPUT_DIRECTORY)
+                }
             )
         }).not.toThrow();
     })

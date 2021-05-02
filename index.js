@@ -19,7 +19,7 @@ const fs = require('fs');
 
 /**
  * @typedef {object} OverleiaInput
- * @property {String[]} inputs - file paths
+ * @property {Buffer[]} inputs - file paths
  * @property {TemplateInput} template
  * @property {String} [filetype="mp4"]
  * @property {Boolean} verbose
@@ -27,9 +27,8 @@ const fs = require('fs');
 
 /**
  * @param {OverleiaInput} params
- * @param {String} directory - maximum 1 slash
  */
-const PipLib = async function(params, directory) {
+const PipLib = async function(params) {
 
     try {
         let data = []
@@ -50,11 +49,15 @@ const PipLib = async function(params, directory) {
         let mergeStrings = []
         let audioString = ''
         for (let i = 0, len = inputsNum; i < len; i++) {
-            const arr = new Uint8Array(fs.readFileSync(directory + params.inputs[i]))
             data.push({
-                name: params.inputs[i],
-                data: arr
+                name: 'input' + i,
+                data: params.input[i]
             })
+            // const arr = new Uint8Array(fs.readFileSync(directory + params.inputs[i]))
+            // data.push({
+            //     name: params.inputs[i],
+            //     data: arr
+            // })
             inputArgs.push('-i')
             inputArgs.push(params.inputs[i])
             let layerWidth = params.template.views[i].width || -1
@@ -112,12 +115,13 @@ const PipLib = async function(params, directory) {
             console.log('inputArgs', inputArgs)
         }
         console.log('entry', data)
-        const out = await FfmpegProcessWasm(data, inputArgs, true)
-        const res = await fs.promises.writeFile(directory + outputFile, out)
-        if (!res) {
-            throw new Error('proc failed')
-        }
-        return res
+        return FfmpegProcessWasm(data, inputArgs, true)
+        // const out = await FfmpegProcessWasm(data, inputArgs, true)
+        // const res = await fs.promises.writeFile(directory + outputFile, out)
+        // if (!res) {
+        //     throw new Error('proc failed')
+        // }
+        // return res
     } catch (err) {
         throw err
     }
