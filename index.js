@@ -106,20 +106,24 @@ const PipLib = async function(params, directory) {
             inputArgs.push('ultrafast')
         }
         inputArgs.push('-y')
-        inputArgs.push(outputFile)
+        inputArgs.push('completed.mp4')
 
         if (params.verbose) {
             console.log('inputArgs', inputArgs)
         }
-
-        const out = await FfmpegProcessWasm(data, inputArgs, outputFile, true)
-        return fs.promises.writeFile('./data/' + outputFile, out)
+        console.log('entry', data)
+        const out = await FfmpegProcessWasm(data, inputArgs, true)
+        const res = await fs.promises.writeFile(directory + outputFile, out)
+        if (!res) {
+            throw new Error('proc failed')
+        }
+        return res
     } catch (err) {
         throw err
     }
 }
 
-const FfmpegProcessWasm = async function(data, inputArgs, outputFile, verbose=false) {
+const FfmpegProcessWasm = async function(data, inputArgs, verbose=false) {
     try {
         // TODO: logger: () => {}
         // TODO: progress: () => {}
@@ -130,7 +134,7 @@ const FfmpegProcessWasm = async function(data, inputArgs, outputFile, verbose=fa
             ffmpeg.FS('writeFile', entry.name, JSON.stringify(entry.data));
         })
         await ffmpeg.run(...inputArgs);
-        return ffmpeg.FS('readFile', './data/' + outputFile);
+        return ffmpeg.FS('readFile', 'completed.mp4');
     } catch (err) {
         throw err
     }

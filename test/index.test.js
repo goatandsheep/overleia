@@ -25,7 +25,8 @@ describe('basic ffmpeg', () => {
                             }
                         ],
                         height: 720
-                    }
+                    },
+                    verbose: true
                 },
                 path.join(__dirname, '..', settings.INPUT_DIRECTORY)
             )
@@ -64,7 +65,8 @@ describe('basic ffmpeg', () => {
                             }
                         ],
                         height: 720
-                    }
+                    },
+                    verbose: true
                 },
                 path.join(__dirname, '..', settings.INPUT_DIRECTORY)
             )
