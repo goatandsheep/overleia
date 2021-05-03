@@ -5,8 +5,8 @@
   "main": "index.js",
   "scripts": {
     "next": "node --experimental-wasm-threads --experimental-wasm-bulk-memory test/basic.js",
-    "lint": "xo",
-    "lint:fix": "xo --fix",
+    "lint": "xo index.js",
+    "lint:fix": "xo index.js --fix",
     "test": "jest"
   },
   "repository": {
