@@ -46,19 +46,21 @@ Promise.all(inputProms).then((ins) => {
       views: [
         {
           x: 0,
-          y: 100,
-          height: 620,
+          y: 0,
+          height: 733,
+          width: 1303,
         },
         {
-          x: 10,
-          y: 10,
-          height: 250,
+          x: 10.3451,
+          y: 10.435234,
+          height: 250.5434,
           delay: 1,
         },
         {
-          x: 10,
-          y: 400,
-          height: 250,
+          x: 78.0982905982906,
+          y: 482.1267806267807,
+          height: 180.14672364672367,
+          width: 320.72364672364677,
           delay: 2,
         },
         {
@@ -68,7 +70,8 @@ Promise.all(inputProms).then((ins) => {
           delay: 3,
         },
       ],
-      height: 720,
+      height: 733,
+      width: 1303,
     },
   }).then(out => {
       fs.writeFile(outPath, out).then(() => {

@@ -50,7 +50,7 @@ const PipLib = async function (parameters) {
 			throw new Error('Not enough input files');
 		}
 
-		const sceneWidth = parameters.template.width || (parameters.template.height * 16 / 9);
+		const sceneWidth = parameters.template.width || Math.ceil(parameters.template.height * 16 / 9);
 		// Let inputMediaString = `pad=${sceneWidth}:${params.template.height}:0:0[base];`
 		// let inputMediaString = `nullsrc=size=${sceneWidth}x${params.template.height}[base];`
 		let inputMediaString = '';
@@ -69,10 +69,11 @@ const PipLib = async function (parameters) {
 			// })
 			inputArgs.push('-i');
 			inputArgs.push(tempFileName);
-			const layerWidth = parameters.template.views[i].width || -1;
+			const layerWidth = parameters.template.views[i].width && (parameters.template.views[i].width - (parameters.template.views[i].width % 2)) || -1;
+			const layerHeight = parameters.template.views[i].height - (parameters.template.views[i].height % 2);
 			const layerDelay = parameters.template.views[i].delay || 0;
 			// InputMediaString = inputMediaString.concat(`[${i}:v]setpts=PTS-STARTPTS+${layerDelay}/TB,scale=${layerWidth}:${params.template.views[i].height}[layer_${i}];`)
-			inputMediaString = inputMediaString.concat(`[${i}:v]setpts=PTS-STARTPTS+${layerDelay}/TB,scale=${layerWidth}:${parameters.template.views[i].height}`);
+			inputMediaString = inputMediaString.concat(`[${i}:v]setpts=PTS-STARTPTS+${layerDelay}/TB,scale=${layerWidth}:${layerHeight}`);
 			// InputMediaString = inputMediaString.concat(`[${i}:v]scale=${layerWidth}:${params.template.views[i].height}[layer_${i}];`)
 			inputMediaString = i === 0 ? inputMediaString.concat(`,pad=${sceneWidth}:${parameters.template.height}:(ow-iw)/2:(oh-ih)/2[layer_${i}];`) : inputMediaString.concat(`[layer_${i}];`);
 
