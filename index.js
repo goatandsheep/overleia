@@ -53,7 +53,16 @@ const PipLib = async function (parameters) {
 		const sceneWidth = parameters.template.width || Math.ceil(parameters.template.height * 16 / 9);
 		// Let inputMediaString = `pad=${sceneWidth}:${params.template.height}:0:0[base];`
 		// let inputMediaString = `nullsrc=size=${sceneWidth}x${params.template.height}[base];`
-		let inputMediaString = '';
+
+		// To get duration of video, using ffprobe, this will output video information in json format:
+		// ffprobe -v quiet -print_format json -show_format
+		// get it in json_result['format']['duration']
+		// To get duration of video using only ffmpeg, call ffmpeg with an input file without any other option, like:
+		// ffmpeg -i filename.mp4
+		// and then search for the string "Duration:" in the output. You need to convert from Timecode to Seconds.
+
+		let maxDuration = 30; // Duration of the longest input video, in seconds
+		let inputMediaString = `color=s=${sceneWidth}x${parameters.template.height}:c=black:d=${maxDuration}[base];`;
 		const mergeStrings = [];
 		let audioString = '';
 		for (let i = 0, length = inputsNumber; i < length; i++) {
@@ -73,36 +82,38 @@ const PipLib = async function (parameters) {
 			const layerHeight = parameters.template.views[i].height - (parameters.template.views[i].height % 2);
 			const layerDelay = parameters.template.views[i].delay || 0;
 			// InputMediaString = inputMediaString.concat(`[${i}:v]setpts=PTS-STARTPTS+${layerDelay}/TB,scale=${layerWidth}:${params.template.views[i].height}[layer_${i}];`)
-			inputMediaString = inputMediaString.concat(`[${i}:v]setpts=PTS-STARTPTS+${layerDelay}/TB,scale=${layerWidth}:${layerHeight}`);
 			// InputMediaString = inputMediaString.concat(`[${i}:v]scale=${layerWidth}:${params.template.views[i].height}[layer_${i}];`)
-			inputMediaString = i === 0 ? inputMediaString.concat(`,pad=${sceneWidth}:${parameters.template.height}:(ow-iw)/2:(oh-ih)/2[layer_${i}];`) : inputMediaString.concat(`[layer_${i}];`);
+			//inputMediaString = i === 0 ? inputMediaString.concat(`,pad=${sceneWidth}:${parameters.template.height}:(ow-iw)/2:(oh-ih)/2[layer_${i}];`) : inputMediaString.concat(`[layer_${i}];`);
 
-			mergeStrings.push(`[layer_${i}]overlay=${parameters.template.views[i].y}:${parameters.template.views[i].x}:eof_action=pass`);
+			inputMediaString = inputMediaString.concat(`[${i}:v]setpts=PTS-STARTPTS+${layerDelay}/TB,scale=${layerWidth}:${layerHeight}:force_original_aspect_ratio=1[layer_${i}];`);
+			inputMediaString = inputMediaString.concat(`[base][layer_${i}]overlay=${parameters.template.views[i].y}:${parameters.template.views[i].x}:eof_action=pass[base];`)
+
+			// mergeStrings.push(`[base][layer_${i}]overlay=${parameters.template.views[i].y}:${parameters.template.views[i].x}:eof_action=pass`);
 			audioString = audioString.concat(`[aux_${i}]`);
 			inputMediaString = inputMediaString.concat(`[${i}:a]adelay=delays=${layerDelay}s:all=1[aux_${i}];`);
 		}
 
 		// For (let i = 0, len = mergeStrings.length; i < len; i++) {
-		for (let i = 1, length = mergeStrings.length; i < length; i++) {
-			let prefix = '';
-			let suffix = `[tmp${i + 1}];`;
-			if (i === 0) {
-				// Prefix = '[base]'
-				prefix = '';
-			} else if (i === 1) {
-				// Remove if pad re-added
-				prefix = '[layer_0]';
-				// Prefix='[tmp1]'
-			} else {
-				prefix = `[tmp${i}]`;
-			}
+		// for (let i = 1, length = mergeStrings.length; i < length; i++) {
+		// 	let prefix = '';
+		// 	let suffix = `[tmp${i + 1}];`;
+		// 	if (i === 0) {
+		// 		// Prefix = '[base]'
+		// 		prefix = '[base]';
+		// 	} else if (i === 1) {
+		// 		// Remove if pad re-added
+		// 		prefix = '[layer_0]';
+		// 		// Prefix='[tmp1]'
+		// 	} else {
+		// 		prefix = `[tmp${i}]`;
+		// 	}
 
-			if (i === (length - 1)) {
-				suffix = '[vout];';
-			}
+		// 	if (i === (length - 1)) {
+		// 		suffix = '[vout];';
+		// 	}
 
-			inputMediaString = inputMediaString.concat(prefix + mergeStrings[i] + suffix);
-		}
+		// 	inputMediaString = inputMediaString.concat(prefix + mergeStrings[i] + suffix);
+		// }
 
 		inputMediaString = inputMediaString.concat(`${audioString}amix=inputs=${inputsNumber}[aout]`);
 
@@ -111,7 +122,7 @@ const PipLib = async function (parameters) {
 		inputArgs.push(inputMediaString);
 
 		inputArgs.push('-map');
-		inputArgs.push('[vout]');
+		inputArgs.push('[base]');
 		inputArgs.push('-map');
 		inputArgs.push('[aout]');
 

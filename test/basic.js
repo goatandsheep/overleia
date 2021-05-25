@@ -14,14 +14,14 @@ const inputProms = [
       settings.BASE_INPUT_MP4_FILENAME
     )
   ),
-  fs.readFile(
-    path.join(
-      __dirname,
-      "..",
-      settings.INPUT_DIRECTORY,
-      settings.PIP_INPUT_MP4_FILENAME
-    )
-  ),
+  // fs.readFile(
+  //   path.join(
+  //     __dirname,
+  //     "..",
+  //     settings.INPUT_DIRECTORY,
+  //     settings.PIP_INPUT_MP4_FILENAME
+  //   )
+  // ),
   fs.readFile(
     path.join(
       __dirname,
@@ -43,36 +43,28 @@ Promise.all(inputProms).then((ins) => {
   Pip({
     inputs: ins,
     template: {
-      views: [
+      "height": 720,
+      "id": "0ac5c561-15dd-41d6-8448-41b427f9c1d8",
+      "name": "bottom-middle-box",
+      "views": [
         {
-          x: 0,
-          y: 0,
-          height: 733,
-          width: 1303,
+          "height": 250,
+          "x": 45,
+          "y": 88
         },
         {
-          x: 10.3451,
-          y: 10.435234,
-          height: 250.5434,
-          delay: 1,
+          "height": 250,
+          "x": 766,
+          "y": 84
         },
         {
-          x: 78.0982905982906,
-          y: 482.1267806267807,
-          height: 180.14672364672367,
-          width: 320.72364672364677,
-          delay: 2,
-        },
-        {
-          x: 400,
-          y: 400,
-          height: 250,
-          delay: 3,
-        },
-      ],
-      height: 733,
-      width: 1303,
+          "height": 250,
+          "x": 408,
+          "y": 387
+        }
+      ]
     },
+    verbose: true
   }).then(out => {
       fs.writeFile(outPath, out).then(() => {
           process.exit(0)
