@@ -1,11 +1,20 @@
 'use strict';
-
+/*
 require('@ffmpeg/core');
 const {
 	createFFmpeg
 	// FetchFile
 } = require('@ffmpeg/ffmpeg');
-// Const fs = require('fs');
+*/
+const fs = require('fs').promises;
+const spawn = require('child_process').spawn;
+
+const ffmpegPath = require('@ffmpeg-installer/ffmpeg').path;
+const ffprobePath = require('@ffprobe-installer/ffprobe').path;
+
+const ffmpeg = require('fluent-ffmpeg')
+ffmpeg.setFfmpegPath(ffmpegPath)
+ffmpeg.setFfprobePath(ffprobePath)
 
 /**
  * @typedef {object} ViewInput
@@ -40,13 +49,13 @@ const PipLib = async function (parameters) {
 		const data = [];
 		const inputArgs = [];
 		const inputsNumber = parameters.inputs.length;
-		// Const outputFile = (parameters.outputFile || 'completed') + '.' + (parameters.filetype || 'mp4');
+		// const outputFile = (parameters.outputFile || 'completed') + '.' + (parameters.filetype || 'mp4');
 
 		if (!parameters.template.height) {
 			throw new Error('No scene height set');
 		}
 
-		if (inputsNumber < parameters.inputs.views) {
+		if (inputsNumber < parameters.template.views) {
 			throw new Error('Not enough input files');
 		}
 
@@ -56,28 +65,36 @@ const PipLib = async function (parameters) {
 
 		// To get duration of video, using ffprobe, this will output video information in json format:
 		// ffprobe -v quiet -print_format json -show_format
+		const metadata = await ffprobeBin(parameters.inputs)
 		// get it in json_result['format']['duration']
 		// To get duration of video using only ffmpeg, call ffmpeg with an input file without any other option, like:
 		// ffmpeg -i filename.mp4
 		// and then search for the string "Duration:" in the output. You need to convert from Timecode to Seconds.
-
-		let maxDuration = 30; // Duration of the longest input video, in seconds
+ 		/**
+		  * Duration of the longest input video
+		  * @type {Number} seconds
+		  */
+		let maxDuration = await totalDurationCalculate(parameters.template.views, metadata);
+		if (parameters.verbose) {
+			console.log('maxDur', maxDuration)
+		}
 		let inputMediaString = `color=s=${sceneWidth}x${parameters.template.height}:c=black:d=${maxDuration}[base];`;
-		const mergeStrings = [];
+		// const mergeStrings = [];
 		let audioString = '';
 		for (let i = 0, length = inputsNumber; i < length; i++) {
-            const tempFileName = 'input' + i + '.' + (parameters.filetype || 'mp4')
-			data.push({
-				name: tempFileName,
-				data: new Uint8Array(parameters.inputs[i])
-			});
-			// Const arr = new Uint8Array(fs.readFileSync(directory + params.inputs[i]))
+
+            // const tempFileName = 'input' + i + '.' + (parameters.filetype || 'mp4')
+			// data.push({
+			// 	name: tempFileName,
+			// 	data: new Uint8Array(parameters.inputs[i])
+			// });
+			// const arr = new Uint8Array(fs.readFileSync(directory + params.inputs[i]))
 			// data.push({
 			//     name: params.inputs[i],
 			//     data: arr
 			// })
 			inputArgs.push('-i');
-			inputArgs.push(tempFileName);
+			inputArgs.push(parameters.inputs[i]);
 			const layerWidth = parameters.template.views[i].width && (parameters.template.views[i].width - (parameters.template.views[i].width % 2)) || -1;
 			const layerHeight = parameters.template.views[i].height - (parameters.template.views[i].height % 2);
 			const layerDelay = parameters.template.views[i].delay || 0;
@@ -86,11 +103,11 @@ const PipLib = async function (parameters) {
 			//inputMediaString = i === 0 ? inputMediaString.concat(`,pad=${sceneWidth}:${parameters.template.height}:(ow-iw)/2:(oh-ih)/2[layer_${i}];`) : inputMediaString.concat(`[layer_${i}];`);
 
 			inputMediaString = inputMediaString.concat(`[${i}:v]setpts=PTS-STARTPTS+${layerDelay}/TB,scale=${layerWidth}:${layerHeight}:force_original_aspect_ratio=1[layer_${i}];`);
-			inputMediaString = inputMediaString.concat(`[base][layer_${i}]overlay=${parameters.template.views[i].y}:${parameters.template.views[i].x}:eof_action=pass[base];`)
+			inputMediaString = inputMediaString.concat(`[base][layer_${i}]overlay=${parameters.template.views[i].x}:${parameters.template.views[i].y}:eof_action=pass[base];`)
 
 			// mergeStrings.push(`[base][layer_${i}]overlay=${parameters.template.views[i].y}:${parameters.template.views[i].x}:eof_action=pass`);
 			audioString = audioString.concat(`[aux_${i}]`);
-			inputMediaString = inputMediaString.concat(`[${i}:a]adelay=delays=${layerDelay}s:all=1[aux_${i}];`);
+			inputMediaString = inputMediaString.concat(`[${i}:a]adelay=${layerDelay * 1000}|${layerDelay * 1000}|${layerDelay * 1000}|${layerDelay * 1000}|${layerDelay * 1000}|${layerDelay * 1000}[aux_${i}];`);
 		}
 
 		// For (let i = 0, len = mergeStrings.length; i < len; i++) {
@@ -138,9 +155,10 @@ const PipLib = async function (parameters) {
 			console.log('inputArgs', inputArgs);
 		}
 
-		console.log('entry', data);
-		return ffmpegProcessWasm(data, inputArgs, true);
-		// Const out = await ffmpegProcessWasm(data, inputArgs, true)
+		console.log('entry', parameters.inputs);
+		return await ffmpegProcessBin(parameters.inputs, inputArgs, true);
+		// return ffmpegProcessWasm(data, inputArgs, true);
+		// const out = await ffmpegProcessWasm(data, inputArgs, true)
 		// const res = await fs.promises.writeFile(directory + outputFile, out)
 		// if (!res) {
 		//     throw new Error('proc failed')
@@ -150,6 +168,96 @@ const PipLib = async function (parameters) {
 		throw error;
 	}
 };
+
+/**
+ * 
+ * @param {ViewInput[]} inputs 
+ * @param {any[]} metadata 
+ * @returns {Number} seconds
+ */
+const totalDurationCalculate = async function(inputs, metadata) {
+	if (inputs.length !== metadata.length) {
+		throw new Error('mismatched template and input lengths')
+	}
+	const lengthProms = inputs.map((entry, i) => {
+		return (entry.delay || 0) + metadata[i].duration
+	})
+	const lengths = await Promise.all(lengthProms);
+	return Math.max(...lengths)
+}
+
+const ffprobeBin = async function(data) {
+		
+	const metaProms = data.map((entry) => {
+		return new Promise((resolve, reject) => {
+			try {
+				ffmpeg.ffprobe(entry, (err, metadata) => {
+					if (err) {
+						console.error('error')
+						reject(err)
+					}
+					resolve(metadata.format)
+				})
+			} catch (err) {
+				reject(err)
+			}
+		})
+	});
+	return Promise.all(metaProms)
+}
+
+const ffmpegProcessBin = async function(data, inputArgs, verbose = false) {
+	try {
+		/*
+		const metaProms = data.map((entry) => {
+			return new Promise((resolve, reject) => {
+				try {
+					ffmpeg.ffprobe(entry, (err, metadata) => {
+						if (err) {
+							console.error('error')
+							reject(err)
+						}
+						resolve(metadata.format)
+					})
+						// .on('end', (meta) => {
+						// 	resolve(meta)
+						// })
+						// .on('error', (err) => {
+						// 	reject(err)
+						// })
+				} catch (err) {
+					reject(err)
+				}
+			})
+		});
+		const inputMeta = await Promise.all(metaProms)
+		*/
+
+		const ffProm = new Promise((resolve, reject) => {
+
+			const ffmpeg = spawn(ffmpegPath, inputArgs);
+			ffmpeg.stderr.on('data', (data) => {
+				console.log(`${data}`)
+			})
+			ffmpeg.on('exit', (args) => {
+				console.log('ff success exit')
+				resolve(args);
+			});
+			ffmpeg.on('close', (args) => {
+				console.log('ff success close')
+				resolve(args);
+			});
+			ffmpeg.on('error', (err) => {
+				console.error('ff error', err)
+				reject(err)
+			})
+		})
+		return await ffProm
+		
+	} catch (error) {
+		throw error;
+	}
+}
 
 const ffmpegProcessWasm = async function (data, inputArgs, verbose = false) {
 	try {
