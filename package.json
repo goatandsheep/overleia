@@ -1,6 +1,6 @@
 {
   "name": "overleia",
-  "version": "2.1.2",
+  "version": "3.0.4",
   "description": "Simplified picture-in-picture library for Node JS",
   "main": "index.js",
   "scripts": {
@@ -34,7 +34,10 @@
     "xo": "^0.37.1"
   },
   "dependencies": {
+    "@ffmpeg-installer/ffmpeg": "^1.0.20",
     "@ffmpeg/core": "^0.8.5",
-    "@ffmpeg/ffmpeg": "^0.9.7"
+    "@ffmpeg/ffmpeg": "^0.9.7",
+    "@ffprobe-installer/ffprobe": "^1.1.0",
+    "fluent-ffmpeg": "^2.1.2"
   }
 }
