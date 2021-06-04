@@ -12,6 +12,7 @@ Pip({
     path.join(__dirname, '..', settings.INPUT_DIRECTORY, settings.BASE_INPUT_MP4_FILENAME),
     path.join(__dirname, '..', settings.INPUT_DIRECTORY, settings.PIP_INPUT_MP4_FILENAME)
   ],
+  output: path.join(__dirname, '..', settings.INPUT_DIRECTORY, settings.PIP_OUTPUT_FILENAME),
   template: {
     "height": 720,
     "id": "0ac5c561-15dd-41d6-8448-41b427f9c1d8",

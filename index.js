@@ -35,6 +35,7 @@ ffmpeg.setFfprobePath(ffprobePath)
 /**
  * @typedef {object} OverleiaInput
  * @property {Buffer[]} inputs - file paths
+ * @property {String} [output="completed.mp4"] - file path
  * @property {TemplateInput} template
  * @property {String} [filetype="mp4"]
  * @property {Boolean} verbose
@@ -51,6 +52,7 @@ const PipLib = async function (parameters) {
 		const inputsNumber = parameters.inputs.length;
 		// const outputFile = (parameters.outputFile || 'completed') + '.' + (parameters.filetype || 'mp4');
 
+		const outputPath = parameters.output || 'completed.mp4';
 		if (!parameters.template.height) {
 			throw new Error('No scene height set');
 		}
@@ -149,7 +151,7 @@ const PipLib = async function (parameters) {
 		}
 
 		inputArgs.push('-y');
-		inputArgs.push('completed.mp4');
+		inputArgs.push(outputPath);
 
 		if (parameters.verbose) {
 			console.log('inputArgs', inputArgs);
