@@ -36,6 +36,8 @@ Pip({
     ]
   },
   verbose: true
+}).then(val => {
+  console.log('response', val)
 })
 
 // Buffer-based process

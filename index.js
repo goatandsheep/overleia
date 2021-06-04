@@ -243,11 +243,11 @@ const ffmpegProcessBin = async function(data, inputArgs, verbose = false) {
 			})
 			ffmpeg.on('exit', (args) => {
 				console.log('ff success exit')
-				resolve(args);
+				resolve(args || true);
 			});
 			ffmpeg.on('close', (args) => {
 				console.log('ff success close')
-				resolve(args);
+				resolve(args || true);
 			});
 			ffmpeg.on('error', (err) => {
 				console.error('ff error', err)
