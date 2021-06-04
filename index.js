@@ -42,8 +42,9 @@ ffmpeg.setFfprobePath(ffprobePath)
  */
 
 /**
+ * This is a path-specific library so outputs are more an indication of success
  * @param {OverleiaInput} params
- * @returns {Promise<Uint8Array>}
+ * @returns {Promise<Boolean>}
  */
 const PipLib = async function (parameters) {
 	try {
