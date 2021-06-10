@@ -154,6 +154,12 @@ const PipLib = async function (parameters) {
 		inputArgs.push('-y');
 		inputArgs.push(outputPath);
 
+		// inputArgs.push('-loglevel');
+		// inputArgs.push('debug')
+
+		inputArgs.push('-progress')
+		inputArgs.push('pipe:1')
+
 		if (parameters.verbose) {
 			console.log('inputArgs', inputArgs);
 		}
@@ -240,7 +246,35 @@ const ffmpegProcessBin = async function(data, inputArgs, verbose = false) {
 
 			const ffmpeg = spawn(ffmpegPath, inputArgs);
 			ffmpeg.stderr.on('data', (data) => {
-				console.log(`${data}`)
+				console.log('data:', `${data}`)
+				// const keysIter = data.keys()
+				// console.log('keys', keysIter)
+				// console.log('first', data[0])
+				// let key = keysIter.next()
+				// while (!key.done) {
+				// 	console.log(key.value, data[key.value]); // 1 3 5 7 9
+				// 	key = keysIter.next();
+				//    }
+				// t: 
+				var progress = {};
+
+				// Remove all spaces after = and trim
+				line  = data.replace(/=\s+/g, '=').trim();
+				var progressParts = line.split(' ');
+			  
+				// Split every progress part by "=" to get key and value
+				for(var i = 0; i < progressParts.length; i++) {
+				  var progressSplit = progressParts[i].split('=', 2);
+				  var key = progressSplit[0];
+				  var value = progressSplit[1];
+			  
+				  // This is not a progress line
+				  if(typeof value === 'undefined')
+					return null;
+			  
+				  progress[key] = value;
+				}
+				   
 			})
 			ffmpeg.on('exit', (args) => {
 				console.log('ff success exit')
