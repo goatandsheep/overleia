@@ -109,6 +109,7 @@ const PipLib = async function (parameters) {
 			inputMediaString = inputMediaString.concat(`[base][layer_${i}]overlay=${parameters.template.views[i].x}:${parameters.template.views[i].y}:eof_action=pass[base];`)
 
 			// mergeStrings.push(`[base][layer_${i}]overlay=${parameters.template.views[i].y}:${parameters.template.views[i].x}:eof_action=pass`);
+			console.log('audio?', metadata[i].streams.includes('audio') || 'no');
 			audioString = audioString.concat(`[aux_${i}]`);
 			inputMediaString = inputMediaString.concat(`[${i}:a]adelay=${layerDelay * 1000}|${layerDelay * 1000}|${layerDelay * 1000}|${layerDelay * 1000}|${layerDelay * 1000}|${layerDelay * 1000}[aux_${i}];`);
 		}
@@ -199,7 +200,14 @@ const ffprobeBin = async function(data) {
 						console.error('error')
 						reject(err)
 					}
-					resolve(metadata.format)
+					let streams = metadata.streams.map((stream) => {
+						return stream.codec_type;
+					})
+					// console.log('meta', metadata)
+					let filteredObj = metadata.format
+					filteredObj.streams = streams
+					// resolve(metadata.format)
+					resolve(filteredObj)
 				})
 			} catch (err) {
 				reject(err)
