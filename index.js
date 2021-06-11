@@ -51,6 +51,7 @@ const PipLib = async function (parameters) {
 		const data = [];
 		const inputArgs = [];
 		const inputsNumber = parameters.inputs.length;
+		let audioInputsNumber = 0;
 		// const outputFile = (parameters.outputFile || 'completed') + '.' + (parameters.filetype || 'mp4');
 
 		const outputPath = parameters.output || 'completed.mp4';
@@ -109,8 +110,11 @@ const PipLib = async function (parameters) {
 			inputMediaString = inputMediaString.concat(`[base][layer_${i}]overlay=${parameters.template.views[i].x}:${parameters.template.views[i].y}:eof_action=pass[base];`)
 
 			// mergeStrings.push(`[base][layer_${i}]overlay=${parameters.template.views[i].y}:${parameters.template.views[i].x}:eof_action=pass`);
-			audioString = audioString.concat(`[aux_${i}]`);
-			inputMediaString = inputMediaString.concat(`[${i}:a]adelay=${layerDelay * 1000}|${layerDelay * 1000}|${layerDelay * 1000}|${layerDelay * 1000}|${layerDelay * 1000}|${layerDelay * 1000}[aux_${i}];`);
+			if (metadata[i].streams.includes('audio')) {
+				audioInputsNumber++
+				audioString = audioString.concat(`[aux_${i}]`);
+				inputMediaString = inputMediaString.concat(`[${i}:a]adelay=${layerDelay * 1000}|${layerDelay * 1000}|${layerDelay * 1000}|${layerDelay * 1000}|${layerDelay * 1000}|${layerDelay * 1000}[aux_${i}];`);
+			}
 		}
 
 		// For (let i = 0, len = mergeStrings.length; i < len; i++) {
@@ -135,7 +139,7 @@ const PipLib = async function (parameters) {
 		// 	inputMediaString = inputMediaString.concat(prefix + mergeStrings[i] + suffix);
 		// }
 
-		inputMediaString = inputMediaString.concat(`${audioString}amix=inputs=${inputsNumber}[aout]`);
+		inputMediaString = inputMediaString.concat(`${audioString}amix=inputs=${audioInputsNumber}[aout]`);
 
 		inputArgs.push('-filter_complex');
 
@@ -199,7 +203,14 @@ const ffprobeBin = async function(data) {
 						console.error('error')
 						reject(err)
 					}
-					resolve(metadata.format)
+					let streams = metadata.streams.map((stream) => {
+						return stream.codec_type;
+					})
+					// console.log('meta', metadata)
+					let filteredObj = metadata.format
+					filteredObj.streams = streams
+					// resolve(metadata.format)
+					resolve(filteredObj)
 				})
 			} catch (err) {
 				reject(err)
