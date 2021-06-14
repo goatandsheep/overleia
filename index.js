@@ -34,7 +34,7 @@ ffmpeg.setFfprobePath(ffprobePath)
 
 /**
  * @typedef {object} OverleiaInput
- * @property {Buffer[]} inputs - file paths
+ * @property {String[]} inputs - file paths
  * @property {String} [output="completed.mp4"] - file path
  * @property {TemplateInput} template
  * @property {String} [filetype="mp4"]
@@ -190,7 +190,7 @@ const totalDurationCalculate = async function(inputs, metadata) {
 		return (entry.delay || 0) + metadata[i].duration
 	})
 	const lengths = await Promise.all(lengthProms);
-	return Math.max(...lengths)
+	return Math.max(...lengths, 1)
 }
 
 const ffprobeBin = async function(data) {
