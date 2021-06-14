@@ -98,7 +98,11 @@ const PipLib = async function (parameters) {
 			//     data: arr
 			// })
 			inputArgs.push('-i');
-			inputArgs.push(parameters.inputs[i]);
+			if (metadata[i].duration < 0.1) {
+				inputArgs.push(parameters.inputs[i] + ':loop=0');
+			} else {
+				inputArgs.push(parameters.inputs[i]);
+			}
 			const layerWidth = parameters.template.views[i].width && (parameters.template.views[i].width - (parameters.template.views[i].width % 2)) || -1;
 			const layerHeight = parameters.template.views[i].height - (parameters.template.views[i].height % 2);
 			const layerDelay = parameters.template.views[i].delay || 0;
