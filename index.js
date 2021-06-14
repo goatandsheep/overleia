@@ -69,7 +69,7 @@ const PipLib = async function (parameters) {
 
 		// To get duration of video, using ffprobe, this will output video information in json format:
 		// ffprobe -v quiet -print_format json -show_format
-		const metadata = await ffprobeBin(parameters.inputs)
+		const metadata = await ffprobeBin(parameters.inputs, parameters.verbose)
 		// get it in json_result['format']['duration']
 		// To get duration of video using only ffmpeg, call ffmpeg with an input file without any other option, like:
 		// ffmpeg -i filename.mp4
@@ -106,8 +106,13 @@ const PipLib = async function (parameters) {
 			// InputMediaString = inputMediaString.concat(`[${i}:v]scale=${layerWidth}:${params.template.views[i].height}[layer_${i}];`)
 			//inputMediaString = i === 0 ? inputMediaString.concat(`,pad=${sceneWidth}:${parameters.template.height}:(ow-iw)/2:(oh-ih)/2[layer_${i}];`) : inputMediaString.concat(`[layer_${i}];`);
 
-			inputMediaString = inputMediaString.concat(`[${i}:v]setpts=PTS-STARTPTS+${layerDelay}/TB,scale=${layerWidth}:${layerHeight}:force_original_aspect_ratio=1[layer_${i}];`);
-			inputMediaString = inputMediaString.concat(`[base][layer_${i}]overlay=${parameters.template.views[i].x}:${parameters.template.views[i].y}:eof_action=pass[base];`)
+			if (metadata[i].duration < 0.1) {
+				inputMediaString = inputMediaString.concat(`[${i}:v]setpts=PTS-STARTPTS+${layerDelay}/TB,scale=${layerWidth}:${layerHeight}:force_original_aspect_ratio=1[layer_${i}];`);
+				inputMediaString = inputMediaString.concat(`[base][layer_${i}]overlay=${parameters.template.views[i].x}:${parameters.template.views[i].y}:eof_action=pass[base];`)
+			} else {
+				inputMediaString = inputMediaString.concat(`[${i}:v]setpts=PTS-STARTPTS+${layerDelay}/TB,scale=${layerWidth}:${layerHeight}:force_original_aspect_ratio=1[layer_${i}];`);
+				inputMediaString = inputMediaString.concat(`[base][layer_${i}]overlay=${parameters.template.views[i].x}:${parameters.template.views[i].y}:eof_action=pass[base];`)
+			}
 
 			// mergeStrings.push(`[base][layer_${i}]overlay=${parameters.template.views[i].y}:${parameters.template.views[i].x}:eof_action=pass`);
 			if (metadata[i].streams.includes('audio')) {
@@ -193,7 +198,7 @@ const totalDurationCalculate = async function(inputs, metadata) {
 	return Math.max(...lengths, 1)
 }
 
-const ffprobeBin = async function(data) {
+const ffprobeBin = async function(data, verbose) {
 		
 	const metaProms = data.map((entry) => {
 		return new Promise((resolve, reject) => {
@@ -206,7 +211,9 @@ const ffprobeBin = async function(data) {
 					let streams = metadata.streams.map((stream) => {
 						return stream.codec_type;
 					})
-					// console.log('meta', metadata)
+					if (verbose) {
+						console.log('meta', metadata)
+					}
 					let filteredObj = metadata.format
 					filteredObj.streams = streams
 					// resolve(metadata.format)
