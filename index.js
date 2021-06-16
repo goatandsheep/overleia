@@ -1,11 +1,4 @@
 'use strict';
-/*
-require('@ffmpeg/core');
-const {
-	createFFmpeg
-	// FetchFile
-} = require('@ffmpeg/ffmpeg');
-*/
 const fs = require('fs').promises;
 const spawn = require('child_process').spawn;
 
@@ -106,10 +99,6 @@ const PipLib = async function (parameters) {
 			
 			inputArgs.push('-i');
 			inputArgs.push(parameters.inputs[i]);
-			
-			// InputMediaString = inputMediaString.concat(`[${i}:v]setpts=PTS-STARTPTS+${layerDelay}/TB,scale=${layerWidth}:${params.template.views[i].height}[layer_${i}];`)
-			// InputMediaString = inputMediaString.concat(`[${i}:v]scale=${layerWidth}:${params.template.views[i].height}[layer_${i}];`)
-			//inputMediaString = i === 0 ? inputMediaString.concat(`,pad=${sceneWidth}:${parameters.template.height}:(ow-iw)/2:(oh-ih)/2[layer_${i}];`) : inputMediaString.concat(`[layer_${i}];`);
 
 			inputMediaString = inputMediaString.concat(`[${i}:v]setpts=PTS-STARTPTS+${layerDelay}/TB,scale=${layerWidth}:${layerHeight}:force_original_aspect_ratio=1[layer_${i}];`);
 			inputMediaString = inputMediaString.concat(`[base][layer_${i}]overlay=${parameters.template.views[i].x}:${parameters.template.views[i].y}:eof_action=pass[base];`)
@@ -121,28 +110,6 @@ const PipLib = async function (parameters) {
 				inputMediaString = inputMediaString.concat(`[${i}:a]adelay=${layerDelay * 1000}|${layerDelay * 1000}|${layerDelay * 1000}|${layerDelay * 1000}|${layerDelay * 1000}|${layerDelay * 1000}[aux_${i}];`);
 			}
 		}
-
-		// For (let i = 0, len = mergeStrings.length; i < len; i++) {
-		// for (let i = 1, length = mergeStrings.length; i < length; i++) {
-		// 	let prefix = '';
-		// 	let suffix = `[tmp${i + 1}];`;
-		// 	if (i === 0) {
-		// 		// Prefix = '[base]'
-		// 		prefix = '[base]';
-		// 	} else if (i === 1) {
-		// 		// Remove if pad re-added
-		// 		prefix = '[layer_0]';
-		// 		// Prefix='[tmp1]'
-		// 	} else {
-		// 		prefix = `[tmp${i}]`;
-		// 	}
-
-		// 	if (i === (length - 1)) {
-		// 		suffix = '[vout];';
-		// 	}
-
-		// 	inputMediaString = inputMediaString.concat(prefix + mergeStrings[i] + suffix);
-		// }
 
 		inputMediaString = inputMediaString.concat(`${audioString}amix=inputs=${audioInputsNumber}[aout]`);
 
@@ -163,22 +130,12 @@ const PipLib = async function (parameters) {
 		inputArgs.push('-y');
 		inputArgs.push(outputPath);
 
-		// inputArgs.push('-progress')
-		// inputArgs.push('pipe:1')
-
 		if (parameters.verbose) {
 			console.log('inputArgs', inputArgs);
 			console.log('entry', parameters.inputs);
 		}
 
 		return await ffmpegProcessBin(parameters.inputs, inputArgs, parameters.verbose, maxDuration, parameters.progressCallback);
-		// return ffmpegProcessWasm(data, inputArgs, true);
-		// const out = await ffmpegProcessWasm(data, inputArgs, true)
-		// const res = await fs.promises.writeFile(directory + outputFile, out)
-		// if (!res) {
-		//     throw new Error('proc failed')
-		// }
-		// return res
 	} catch (error) {
 		throw error;
 	}
@@ -232,30 +189,6 @@ const ffprobeBin = async function(data, verbose) {
 
 const ffmpegProcessBin = async function(data, inputArgs, verbose = false, maxDuration, progressCallback) {
 	try {
-		/*
-		const metaProms = data.map((entry) => {
-			return new Promise((resolve, reject) => {
-				try {
-					ffmpeg.ffprobe(entry, (err, metadata) => {
-						if (err) {
-							console.error('error')
-							reject(err)
-						}
-						resolve(metadata.format)
-					})
-						// .on('end', (meta) => {
-						// 	resolve(meta)
-						// })
-						// .on('error', (err) => {
-						// 	reject(err)
-						// })
-				} catch (err) {
-					reject(err)
-				}
-			})
-		});
-		const inputMeta = await Promise.all(metaProms)
-		*/
 
 		const ffProm = new Promise((resolve, reject) => {
 
@@ -313,23 +246,5 @@ const ffmpegProcessBin = async function(data, inputArgs, verbose = false, maxDur
 		throw error;
 	}
 }
-
-const ffmpegProcessWasm = async function (data, inputArgs, verbose = false) {
-	try {
-		// TODO: logger: () => {}
-		// TODO: progress: () => {}
-		const ffmpeg = createFFmpeg({log: verbose});
-
-		await ffmpeg.load();
-		data.forEach(entry => {
-			ffmpeg.FS('writeFile', entry.name, entry.data);
-		});
-		await ffmpeg.run(...inputArgs);
-		const out = ffmpeg.FS('readFile', 'completed.mp4');
-		return out;
-	} catch (error) {
-		throw error;
-	}
-};
 
 module.exports = PipLib;
