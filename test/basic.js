@@ -8,7 +8,7 @@ const settings = require("./settings");
 
 Pip({
   inputs: [
-    path.join(__dirname, '..', settings.INPUT_DIRECTORY, settings.BASE_INPUT_MP4_FILENAME),
+    path.join(__dirname, '..', settings.INPUT_DIRECTORY, settings.PIP_INPUT_IMG_FILENAME),
     path.join(__dirname, '..', settings.INPUT_DIRECTORY, settings.BASE_INPUT_MP4_FILENAME),
     path.join(__dirname, '..', settings.INPUT_DIRECTORY, settings.PIP_INPUT_MP4_FILENAME)
   ],
