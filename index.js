@@ -33,12 +33,19 @@ ffmpeg.setFfprobePath(ffprobePath)
  */
 
 /**
+ * @callback ProgressCB
+ * @param {Number} percent
+ * @return {void}
+ */
+
+/**
  * @typedef {object} OverleiaInput
  * @property {Buffer[]} inputs - file paths
  * @property {String} [output="completed.mp4"] - file path
  * @property {TemplateInput} template
  * @property {String} [filetype="mp4"]
  * @property {Boolean} verbose
+ * @property {ProgressCB} progressCallback
  */
 
 /**
@@ -165,7 +172,7 @@ const PipLib = async function (parameters) {
 		}
 
 		console.log('entry', parameters.inputs);
-		return await ffmpegProcessBin(parameters.inputs, inputArgs, true);
+		return await ffmpegProcessBin(parameters.inputs, inputArgs, true, maxDuration, parameters.progressCallback);
 		// return ffmpegProcessWasm(data, inputArgs, true);
 		// const out = await ffmpegProcessWasm(data, inputArgs, true)
 		// const res = await fs.promises.writeFile(directory + outputFile, out)
@@ -215,7 +222,7 @@ const ffprobeBin = async function(data) {
 	return Promise.all(metaProms)
 }
 
-const ffmpegProcessBin = async function(data, inputArgs, verbose = false) {
+const ffmpegProcessBin = async function(data, inputArgs, verbose = false, maxDuration) {
 	try {
 		/*
 		const metaProms = data.map((entry) => {
@@ -246,33 +253,30 @@ const ffmpegProcessBin = async function(data, inputArgs, verbose = false) {
 
 			const ffmpeg = spawn(ffmpegPath, inputArgs);
 			ffmpeg.stderr.on('data', (data) => {
-				console.log('data:', `${data}`)
-				// const keysIter = data.keys()
-				// console.log('keys', keysIter)
-				// console.log('first', data[0])
-				// let key = keysIter.next()
-				// while (!key.done) {
-				// 	console.log(key.value, data[key.value]); // 1 3 5 7 9
-				// 	key = keysIter.next();
-				//    }
-				// t: 
 				var progress = {};
 
 				// Remove all spaces after = and trim
-				line  = data.replace(/=\s+/g, '=').trim();
-				var progressParts = line.split(' ');
-			  
-				// Split every progress part by "=" to get key and value
-				for(var i = 0; i < progressParts.length; i++) {
-				  var progressSplit = progressParts[i].split('=', 2);
-				  var key = progressSplit[0];
-				  var value = progressSplit[1];
-			  
-				  // This is not a progress line
-				  if(typeof value === 'undefined')
-					return null;
-			  
-				  progress[key] = value;
+				const line  = data.toString()
+				if (line.match(/^frame\=/g)) {
+					var progressParts = line.replace(/(\s){2,}/g, ' ').replace(/\=\s/g, '=').split(/(\s)+/g);
+				  
+					// Split every progress part by "=" to get key and value
+					for(var i = 0; i < progressParts.length; i++) {
+					  var progressSplit = progressParts[i].replace(' ', '').split('=');
+					  if (progressSplit.length === 2) {
+						var key = progressSplit[0];
+						var value = progressSplit[1];
+				  
+						progress[key] = value;
+					  }
+					}
+					const timeParts = progress.time.split(':')
+					let seconds = timeParts[0] * 3600 + timeParts[1] * 60 + timeParts[2]
+					const percent = Math.floor((seconds / maxDuration) * 100)
+					progressCallback(percent)
+					if (verbose) {
+						console.log('percent', `${percent}%`)
+					}
 				}
 				   
 			})
