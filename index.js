@@ -40,7 +40,7 @@ ffmpeg.setFfprobePath(ffprobePath)
 
 /**
  * @typedef {object} OverleiaInput
- * @property {Buffer[]} inputs - file paths
+ * @property {String[]} inputs - file paths
  * @property {String} [output="completed.mp4"] - file path
  * @property {TemplateInput} template
  * @property {String} [filetype="mp4"]
@@ -58,6 +58,7 @@ const PipLib = async function (parameters) {
 		const data = [];
 		const inputArgs = [];
 		const inputsNumber = parameters.inputs.length;
+		let audioInputsNumber = 0;
 		// const outputFile = (parameters.outputFile || 'completed') + '.' + (parameters.filetype || 'mp4');
 
 		const outputPath = parameters.output || 'completed.mp4';
@@ -75,7 +76,7 @@ const PipLib = async function (parameters) {
 
 		// To get duration of video, using ffprobe, this will output video information in json format:
 		// ffprobe -v quiet -print_format json -show_format
-		const metadata = await ffprobeBin(parameters.inputs)
+		const metadata = await ffprobeBin(parameters.inputs, parameters.verbose)
 		// get it in json_result['format']['duration']
 		// To get duration of video using only ffmpeg, call ffmpeg with an input file without any other option, like:
 		// ffmpeg -i filename.mp4
@@ -92,22 +93,20 @@ const PipLib = async function (parameters) {
 		// const mergeStrings = [];
 		let audioString = '';
 		for (let i = 0, length = inputsNumber; i < length; i++) {
-
-            // const tempFileName = 'input' + i + '.' + (parameters.filetype || 'mp4')
-			// data.push({
-			// 	name: tempFileName,
-			// 	data: new Uint8Array(parameters.inputs[i])
-			// });
-			// const arr = new Uint8Array(fs.readFileSync(directory + params.inputs[i]))
-			// data.push({
-			//     name: params.inputs[i],
-			//     data: arr
-			// })
-			inputArgs.push('-i');
-			inputArgs.push(parameters.inputs[i]);
 			const layerWidth = parameters.template.views[i].width && (parameters.template.views[i].width - (parameters.template.views[i].width % 2)) || -1;
 			const layerHeight = parameters.template.views[i].height - (parameters.template.views[i].height % 2);
 			const layerDelay = parameters.template.views[i].delay || 0;
+			
+			if (metadata[i].duration < 0.1) {
+				inputArgs.push('-t');
+				inputArgs.push(maxDuration - layerDelay);
+				inputArgs.push('-loop');
+				inputArgs.push('1');
+			}
+			
+			inputArgs.push('-i');
+			inputArgs.push(parameters.inputs[i]);
+			
 			// InputMediaString = inputMediaString.concat(`[${i}:v]setpts=PTS-STARTPTS+${layerDelay}/TB,scale=${layerWidth}:${params.template.views[i].height}[layer_${i}];`)
 			// InputMediaString = inputMediaString.concat(`[${i}:v]scale=${layerWidth}:${params.template.views[i].height}[layer_${i}];`)
 			//inputMediaString = i === 0 ? inputMediaString.concat(`,pad=${sceneWidth}:${parameters.template.height}:(ow-iw)/2:(oh-ih)/2[layer_${i}];`) : inputMediaString.concat(`[layer_${i}];`);
@@ -116,8 +115,11 @@ const PipLib = async function (parameters) {
 			inputMediaString = inputMediaString.concat(`[base][layer_${i}]overlay=${parameters.template.views[i].x}:${parameters.template.views[i].y}:eof_action=pass[base];`)
 
 			// mergeStrings.push(`[base][layer_${i}]overlay=${parameters.template.views[i].y}:${parameters.template.views[i].x}:eof_action=pass`);
-			audioString = audioString.concat(`[aux_${i}]`);
-			inputMediaString = inputMediaString.concat(`[${i}:a]adelay=${layerDelay * 1000}|${layerDelay * 1000}|${layerDelay * 1000}|${layerDelay * 1000}|${layerDelay * 1000}|${layerDelay * 1000}[aux_${i}];`);
+			if (metadata[i].streams.includes('audio')) {
+				audioInputsNumber++
+				audioString = audioString.concat(`[aux_${i}]`);
+				inputMediaString = inputMediaString.concat(`[${i}:a]adelay=${layerDelay * 1000}|${layerDelay * 1000}|${layerDelay * 1000}|${layerDelay * 1000}|${layerDelay * 1000}|${layerDelay * 1000}[aux_${i}];`);
+			}
 		}
 
 		// For (let i = 0, len = mergeStrings.length; i < len; i++) {
@@ -142,7 +144,7 @@ const PipLib = async function (parameters) {
 		// 	inputMediaString = inputMediaString.concat(prefix + mergeStrings[i] + suffix);
 		// }
 
-		inputMediaString = inputMediaString.concat(`${audioString}amix=inputs=${inputsNumber}[aout]`);
+		inputMediaString = inputMediaString.concat(`${audioString}amix=inputs=${audioInputsNumber}[aout]`);
 
 		inputArgs.push('-filter_complex');
 
@@ -196,10 +198,10 @@ const totalDurationCalculate = async function(inputs, metadata) {
 		return (entry.delay || 0) + metadata[i].duration
 	})
 	const lengths = await Promise.all(lengthProms);
-	return Math.max(...lengths)
+	return Math.max(...lengths, 1)
 }
 
-const ffprobeBin = async function(data) {
+const ffprobeBin = async function(data, verbose) {
 		
 	const metaProms = data.map((entry) => {
 		return new Promise((resolve, reject) => {
@@ -209,7 +211,16 @@ const ffprobeBin = async function(data) {
 						console.error('error')
 						reject(err)
 					}
-					resolve(metadata.format)
+					let streams = metadata.streams.map((stream) => {
+						return stream.codec_type;
+					})
+					if (verbose) {
+						console.log('meta', metadata)
+					}
+					let filteredObj = metadata.format
+					filteredObj.streams = streams
+					// resolve(metadata.format)
+					resolve(filteredObj)
 				})
 			} catch (err) {
 				reject(err)
