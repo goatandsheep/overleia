@@ -97,26 +97,27 @@ const PipLib = async function (parameters) {
 			//     name: params.inputs[i],
 			//     data: arr
 			// })
-			inputArgs.push('-i');
+			
 			if (metadata[i].duration < 0.1) {
-				inputArgs.push(parameters.inputs[i] + ':loop=0');
-			} else {
-				inputArgs.push(parameters.inputs[i]);
+				inputArgs.push('-t');
+				inputArgs.push(maxDuration);
+				inputArgs.push('-loop');
+				inputArgs.push('1');
 			}
+			
+			inputArgs.push('-i');
+			inputArgs.push(parameters.inputs[i]);
+			
 			const layerWidth = parameters.template.views[i].width && (parameters.template.views[i].width - (parameters.template.views[i].width % 2)) || -1;
 			const layerHeight = parameters.template.views[i].height - (parameters.template.views[i].height % 2);
 			const layerDelay = parameters.template.views[i].delay || 0;
+			
 			// InputMediaString = inputMediaString.concat(`[${i}:v]setpts=PTS-STARTPTS+${layerDelay}/TB,scale=${layerWidth}:${params.template.views[i].height}[layer_${i}];`)
 			// InputMediaString = inputMediaString.concat(`[${i}:v]scale=${layerWidth}:${params.template.views[i].height}[layer_${i}];`)
 			//inputMediaString = i === 0 ? inputMediaString.concat(`,pad=${sceneWidth}:${parameters.template.height}:(ow-iw)/2:(oh-ih)/2[layer_${i}];`) : inputMediaString.concat(`[layer_${i}];`);
 
-			if (metadata[i].duration < 0.1) {
-				inputMediaString = inputMediaString.concat(`[${i}:v]setpts=PTS-STARTPTS+${layerDelay}/TB,scale=${layerWidth}:${layerHeight}:force_original_aspect_ratio=1[layer_${i}];`);
-				inputMediaString = inputMediaString.concat(`[base][layer_${i}]overlay=${parameters.template.views[i].x}:${parameters.template.views[i].y}:eof_action=pass[base];`)
-			} else {
-				inputMediaString = inputMediaString.concat(`[${i}:v]setpts=PTS-STARTPTS+${layerDelay}/TB,scale=${layerWidth}:${layerHeight}:force_original_aspect_ratio=1[layer_${i}];`);
-				inputMediaString = inputMediaString.concat(`[base][layer_${i}]overlay=${parameters.template.views[i].x}:${parameters.template.views[i].y}:eof_action=pass[base];`)
-			}
+			inputMediaString = inputMediaString.concat(`[${i}:v]setpts=PTS-STARTPTS+${layerDelay}/TB,scale=${layerWidth}:${layerHeight}:force_original_aspect_ratio=1[layer_${i}];`);
+			inputMediaString = inputMediaString.concat(`[base][layer_${i}]overlay=${parameters.template.views[i].x}:${parameters.template.views[i].y}:eof_action=pass[base];`)
 
 			// mergeStrings.push(`[base][layer_${i}]overlay=${parameters.template.views[i].y}:${parameters.template.views[i].x}:eof_action=pass`);
 			if (metadata[i].streams.includes('audio')) {
