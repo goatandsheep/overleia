@@ -168,10 +168,10 @@ const PipLib = async function (parameters) {
 
 		if (parameters.verbose) {
 			console.log('inputArgs', inputArgs);
+			console.log('entry', parameters.inputs);
 		}
 
-		console.log('entry', parameters.inputs);
-		return await ffmpegProcessBin(parameters.inputs, inputArgs, true, maxDuration, parameters.progressCallback);
+		return await ffmpegProcessBin(parameters.inputs, inputArgs, parameters.verbose, maxDuration, parameters.progressCallback);
 		// return ffmpegProcessWasm(data, inputArgs, true);
 		// const out = await ffmpegProcessWasm(data, inputArgs, true)
 		// const res = await fs.promises.writeFile(directory + outputFile, out)
@@ -291,11 +291,15 @@ const ffmpegProcessBin = async function(data, inputArgs, verbose = false, maxDur
 				   
 			})
 			ffmpeg.on('exit', (args) => {
-				console.log('ff success exit')
+				if (verbose) {
+					console.log('ff success exit')
+				}
 				resolve(args || true);
 			});
 			ffmpeg.on('close', (args) => {
-				console.log('ff success close')
+				if (verbose) {
+					console.log('ff success close')
+				}
 				resolve(args || true);
 			});
 			ffmpeg.on('error', (err) => {

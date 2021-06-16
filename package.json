@@ -4,7 +4,7 @@
   "description": "Simplified picture-in-picture library for Node JS",
   "main": "index.js",
   "scripts": {
-    "next": "node --experimental-wasm-threads --experimental-wasm-bulk-memory test/basic.js",
+    "next": "node test/basic.js",
     "lint": "xo index.js",
     "lint:fix": "xo index.js --fix",
     "test": "jest"
@@ -35,8 +35,6 @@
   },
   "dependencies": {
     "@ffmpeg-installer/ffmpeg": "^1.0.20",
-    "@ffmpeg/core": "^0.8.5",
-    "@ffmpeg/ffmpeg": "^0.9.7",
     "@ffprobe-installer/ffprobe": "^1.1.0",
     "fluent-ffmpeg": "^2.1.2"
   }
