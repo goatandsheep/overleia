@@ -86,31 +86,19 @@ const PipLib = async function (parameters) {
 		// const mergeStrings = [];
 		let audioString = '';
 		for (let i = 0, length = inputsNumber; i < length; i++) {
-
-            // const tempFileName = 'input' + i + '.' + (parameters.filetype || 'mp4')
-			// data.push({
-			// 	name: tempFileName,
-			// 	data: new Uint8Array(parameters.inputs[i])
-			// });
-			// const arr = new Uint8Array(fs.readFileSync(directory + params.inputs[i]))
-			// data.push({
-			//     name: params.inputs[i],
-			//     data: arr
-			// })
+			const layerWidth = parameters.template.views[i].width && (parameters.template.views[i].width - (parameters.template.views[i].width % 2)) || -1;
+			const layerHeight = parameters.template.views[i].height - (parameters.template.views[i].height % 2);
+			const layerDelay = parameters.template.views[i].delay || 0;
 			
 			if (metadata[i].duration < 0.1) {
 				inputArgs.push('-t');
-				inputArgs.push(maxDuration);
+				inputArgs.push(maxDuration - layerDelay);
 				inputArgs.push('-loop');
 				inputArgs.push('1');
 			}
 			
 			inputArgs.push('-i');
 			inputArgs.push(parameters.inputs[i]);
-			
-			const layerWidth = parameters.template.views[i].width && (parameters.template.views[i].width - (parameters.template.views[i].width % 2)) || -1;
-			const layerHeight = parameters.template.views[i].height - (parameters.template.views[i].height % 2);
-			const layerDelay = parameters.template.views[i].delay || 0;
 			
 			// InputMediaString = inputMediaString.concat(`[${i}:v]setpts=PTS-STARTPTS+${layerDelay}/TB,scale=${layerWidth}:${params.template.views[i].height}[layer_${i}];`)
 			// InputMediaString = inputMediaString.concat(`[${i}:v]scale=${layerWidth}:${params.template.views[i].height}[layer_${i}];`)
