@@ -45,7 +45,7 @@ ffmpeg.setFfprobePath(ffprobePath)
  * @property {TemplateInput} template
  * @property {String} [filetype="mp4"]
  * @property {Boolean} verbose
- * @property {ProgressCB} progressCallback
+ * @property [ProgressCB] progressCallback
  */
 
 /**
@@ -161,11 +161,8 @@ const PipLib = async function (parameters) {
 		inputArgs.push('-y');
 		inputArgs.push(outputPath);
 
-		// inputArgs.push('-loglevel');
-		// inputArgs.push('debug')
-
-		inputArgs.push('-progress')
-		inputArgs.push('pipe:1')
+		// inputArgs.push('-progress')
+		// inputArgs.push('pipe:1')
 
 		if (parameters.verbose) {
 			console.log('inputArgs', inputArgs);
@@ -222,7 +219,7 @@ const ffprobeBin = async function(data) {
 	return Promise.all(metaProms)
 }
 
-const ffmpegProcessBin = async function(data, inputArgs, verbose = false, maxDuration) {
+const ffmpegProcessBin = async function(data, inputArgs, verbose = false, maxDuration, progressCallback) {
 	try {
 		/*
 		const metaProms = data.map((entry) => {
@@ -273,7 +270,9 @@ const ffmpegProcessBin = async function(data, inputArgs, verbose = false, maxDur
 					const timeParts = progress.time.split(':')
 					let seconds = timeParts[0] * 3600 + timeParts[1] * 60 + timeParts[2]
 					const percent = Math.floor((seconds / maxDuration) * 100)
-					progressCallback(percent)
+					if (progressCallback) {
+						progressCallback(percent)
+					}
 					if (verbose) {
 						console.log('percent', `${percent}%`)
 					}
