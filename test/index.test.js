@@ -38,11 +38,11 @@ describe('basic ffmpeg', () => {
             }
           })
         return expect(prom).resolves.toBe(true);
-    })
+    }, 9999999)
 
     // test 2
     it('should process 4 videos', async () => {
-      jest.setTimeout(10000);
+      //jest.setTimeout(10000);
         
         const myProm = Pip({
             inputs: [
@@ -79,5 +79,5 @@ describe('basic ffmpeg', () => {
         })
         return expect(myProm).resolves.toBe(true);
         
-    })
+    }, 99999999)
 })
