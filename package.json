@@ -7,7 +7,7 @@
     "next": "node test/basic.js",
     "lint": "xo index.js",
     "lint:fix": "xo index.js --fix",
-    "test": "jest"
+    "test": "jest && npm run lint"
   },
   "repository": {
     "type": "git",
