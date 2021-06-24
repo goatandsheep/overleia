@@ -204,17 +204,17 @@ const ffmpegProcessBin = async function (data, inputArgs, verbose = false, maxDu
 
 					// Split every progress part by "=" to get key and value
 					for (const progressPart of progressParts) {
-					  const progressSplit = progressPart.replace(' ', '').split('=');
-					  if (progressSplit.length === 2) {
+						const progressSplit = progressPart.replace(' ', '').split('=');
+						if (progressSplit.length === 2) {
 							const key = progressSplit[0];
 							const value = progressSplit[1];
 
 							progress[key] = value;
-					  }
+						}
 					}
 
 					const timeParts = progress.time.split(':');
-					const seconds = (timeParts[0] * 3600) + (timeParts[1] * 60) + parseInt(timeParts[2]);
+					const seconds = (timeParts[0] * 3600) + (timeParts[1] * 60) + Number.parseInt(timeParts[2]);
 					const timey = seconds / maxDuration;
 					const percent = Math.floor(timey * 100);
 					if (progressCallback) {
