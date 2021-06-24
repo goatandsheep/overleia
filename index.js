@@ -5,9 +5,9 @@ const spawn = require('child_process').spawn;
 const ffmpegPath = require('@ffmpeg-installer/ffmpeg').path;
 const ffprobePath = require('@ffprobe-installer/ffprobe').path;
 
-const ffmpeg = require('fluent-ffmpeg')
-ffmpeg.setFfmpegPath(ffmpegPath)
-ffmpeg.setFfprobePath(ffprobePath)
+const ffmpeg = require('fluent-ffmpeg');
+ffmpeg.setFfmpegPath(ffmpegPath);
+ffmpeg.setFfprobePath(ffprobePath);
 
 /**
  * @typedef {object} ViewInput
@@ -52,7 +52,7 @@ const PipLib = async function (parameters) {
 		const inputArgs = [];
 		const inputsNumber = parameters.inputs.length;
 		let audioInputsNumber = 0;
-		// const outputFile = (parameters.outputFile || 'completed') + '.' + (parameters.filetype || 'mp4');
+		// Const outputFile = (parameters.outputFile || 'completed') + '.' + (parameters.filetype || 'mp4');
 
 		const outputPath = parameters.output || 'completed.mp4';
 		if (!parameters.template.height) {
@@ -69,8 +69,8 @@ const PipLib = async function (parameters) {
 
 		// To get duration of video, using ffprobe, this will output video information in json format:
 		// ffprobe -v quiet -print_format json -show_format
-		const metadata = await ffprobeBin(parameters.inputs, parameters.verbose)
-		// get it in json_result['format']['duration']
+		const metadata = await ffprobeBin(parameters.inputs, parameters.verbose);
+		// Get it in json_result['format']['duration']
 		// To get duration of video using only ffmpeg, call ffmpeg with an input file without any other option, like:
 		// ffmpeg -i filename.mp4
 		// and then search for the string "Duration:" in the output. You need to convert from Timecode to Seconds.
@@ -78,34 +78,35 @@ const PipLib = async function (parameters) {
 		  * Duration of the longest input video
 		  * @type {Number} seconds
 		  */
-		let maxDuration = await totalDurationCalculate(parameters.template.views, metadata);
+		const maxDuration = await totalDurationCalculate(parameters.template.views, metadata);
 		if (parameters.verbose) {
-			console.log('maxDur', maxDuration)
+			console.log('maxDur', maxDuration);
 		}
+
 		let inputMediaString = `color=s=${sceneWidth}x${parameters.template.height}:c=black:d=${maxDuration}[base];`;
-		// const mergeStrings = [];
+		// Const mergeStrings = [];
 		let audioString = '';
 		for (let i = 0, length = inputsNumber; i < length; i++) {
 			const layerWidth = parameters.template.views[i].width && (parameters.template.views[i].width - (parameters.template.views[i].width % 2)) || -1;
 			const layerHeight = parameters.template.views[i].height - (parameters.template.views[i].height % 2);
 			const layerDelay = parameters.template.views[i].delay || 0;
-			
+
 			if (metadata[i].duration < 0.1) {
 				inputArgs.push('-t');
 				inputArgs.push(maxDuration - layerDelay);
 				inputArgs.push('-loop');
 				inputArgs.push('1');
 			}
-			
+
 			inputArgs.push('-i');
 			inputArgs.push(parameters.inputs[i]);
 
 			inputMediaString = inputMediaString.concat(`[${i}:v]setpts=PTS-STARTPTS+${layerDelay}/TB,scale=${layerWidth}:${layerHeight}:force_original_aspect_ratio=1[layer_${i}];`);
-			inputMediaString = inputMediaString.concat(`[base][layer_${i}]overlay=${parameters.template.views[i].x}:${parameters.template.views[i].y}:eof_action=pass[base];`)
+			inputMediaString = inputMediaString.concat(`[base][layer_${i}]overlay=${parameters.template.views[i].x}:${parameters.template.views[i].y}:eof_action=pass[base];`);
 
-			// mergeStrings.push(`[base][layer_${i}]overlay=${parameters.template.views[i].y}:${parameters.template.views[i].x}:eof_action=pass`);
+			// MergeStrings.push(`[base][layer_${i}]overlay=${parameters.template.views[i].y}:${parameters.template.views[i].x}:eof_action=pass`);
 			if (metadata[i].streams.includes('audio')) {
-				audioInputsNumber++
+				audioInputsNumber++;
 				audioString = audioString.concat(`[aux_${i}]`);
 				inputMediaString = inputMediaString.concat(`[${i}:a]adelay=${layerDelay * 1000}|${layerDelay * 1000}|${layerDelay * 1000}|${layerDelay * 1000}|${layerDelay * 1000}|${layerDelay * 1000}[aux_${i}];`);
 			}
@@ -142,109 +143,112 @@ const PipLib = async function (parameters) {
 };
 
 /**
- * 
- * @param {ViewInput[]} inputs 
- * @param {any[]} metadata 
+ *
+ * @param {ViewInput[]} inputs
+ * @param {any[]} metadata
  * @returns {Number} seconds
  */
-const totalDurationCalculate = async function(inputs, metadata) {
+const totalDurationCalculate = async function (inputs, metadata) {
 	if (inputs.length !== metadata.length) {
-		throw new Error('mismatched template and input lengths')
+		throw new Error('mismatched template and input lengths');
 	}
-	const lengthProms = inputs.map((entry, i) => {
-		return (entry.delay || 0) + metadata[i].duration
-	})
-	const lengths = await Promise.all(lengthProms);
-	return Math.max(...lengths, 1)
-}
 
-const ffprobeBin = async function(data, verbose) {
-		
-	const metaProms = data.map((entry) => {
+	const lengthProms = inputs.map((entry, i) => {
+		return (entry.delay || 0) + metadata[i].duration;
+	});
+	const lengths = await Promise.all(lengthProms);
+	return Math.max(...lengths, 1);
+};
+
+const ffprobeBin = async function (data, verbose) {
+	const metaProms = data.map(entry => {
 		return new Promise((resolve, reject) => {
 			try {
-				ffmpeg.ffprobe(entry, (err, metadata) => {
-					if (err) {
-						console.error('error')
-						reject(err)
+				ffmpeg.ffprobe(entry, (error, metadata) => {
+					if (error) {
+						console.error('error');
+						reject(error);
 					}
-					let streams = metadata.streams.map((stream) => {
+
+					const streams = metadata.streams.map(stream => {
 						return stream.codec_type;
-					})
+					});
 					if (verbose) {
-						console.log('meta', metadata)
+						console.log('meta', metadata);
 					}
-					let filteredObj = metadata.format
-					filteredObj.streams = streams
-					// resolve(metadata.format)
-					resolve(filteredObj)
-				})
-			} catch (err) {
-				reject(err)
+
+					const filteredObject = metadata.format;
+					filteredObject.streams = streams;
+					// Resolve(metadata.format)
+					resolve(filteredObject);
+				});
+			} catch (error) {
+				reject(error);
 			}
-		})
+		});
 	});
-	return Promise.all(metaProms)
-}
+	return Promise.all(metaProms);
+};
 
-const ffmpegProcessBin = async function(data, inputArgs, verbose = false, maxDuration, progressCallback) {
+const ffmpegProcessBin = async function (data, inputArgs, verbose = false, maxDuration, progressCallback) {
 	try {
-
 		const ffProm = new Promise((resolve, reject) => {
-
 			const ffmpeg = spawn(ffmpegPath, inputArgs);
-			ffmpeg.stderr.on('data', (data) => {
-				var progress = {};
+			ffmpeg.stderr.on('data', data => {
+				const progress = {};
 
 				// Remove all spaces after = and trim
-				const line  = data.toString()
-				if (line.match(/^frame\=/g)) {
-					var progressParts = line.replace(/(\s){2,}/g, ' ').replace(/\=\s/g, '=').split(/(\s)+/g);
-				  
+				const line = data.toString();
+				if (line.match(/^frame=/g)) {
+					const progressParts = line.replace(/(\s){2,}/g, ' ').replace(/=\s/g, '=').split(/(\s)+/g);
+
 					// Split every progress part by "=" to get key and value
-					for(var i = 0; i < progressParts.length; i++) {
-					  var progressSplit = progressParts[i].replace(' ', '').split('=');
-					  if (progressSplit.length === 2) {
-						var key = progressSplit[0];
-						var value = progressSplit[1];
-				  
-						progress[key] = value;
-					  }
+					for (const progressPart of progressParts) {
+						const progressSplit = progressPart.replace(' ', '').split('=');
+						if (progressSplit.length === 2) {
+							const key = progressSplit[0];
+							const value = progressSplit[1];
+
+							progress[key] = value;
+						}
 					}
-					const timeParts = progress.time.split(':')
-					let seconds = timeParts[0] * 3600 + timeParts[1] * 60 + timeParts[2]
-					const percent = Math.floor((seconds / maxDuration) * 100)
+
+					const timeParts = progress.time.split(':');
+					const seconds = (timeParts[0] * 3600) + (timeParts[1] * 60) + Number.parseInt(timeParts[2]);
+					const timey = seconds / maxDuration;
+					const percent = Math.floor(timey * 100);
 					if (progressCallback) {
-						progressCallback(percent)
+						progressCallback(percent);
 					}
+
 					if (verbose) {
-						console.log('percent', `${percent}%`)
+						console.log('percent', `${percent}%`);
 					}
 				}
-				   
-			})
-			ffmpeg.on('exit', (args) => {
+			});
+			ffmpeg.on('exit', args => {
 				if (verbose) {
-					console.log('ff success exit')
+					console.log('ff success exit');
 				}
+
 				resolve(args || true);
 			});
-			ffmpeg.on('close', (args) => {
+			ffmpeg.on('close', args => {
 				if (verbose) {
-					console.log('ff success close')
+					console.log('ff success close');
 				}
+
 				resolve(args || true);
 			});
-			ffmpeg.on('error', (err) => {
-				console.error('ff error', err)
-				reject(err)
-			})
-		})
-		return await ffProm
-		
+			ffmpeg.on('error', error => {
+				console.error('ff error', error);
+				reject(error);
+			});
+		});
+		return await ffProm;
 	} catch (error) {
 		throw error;
 	}
-}
+};
 
 module.exports = PipLib;
