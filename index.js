@@ -214,8 +214,9 @@ const ffmpegProcessBin = async function (data, inputArgs, verbose = false, maxDu
 					}
 
 					const timeParts = progress.time.split(':');
-					const seconds = timeParts[0] * 3600 + timeParts[1] * 60 + timeParts[2];
-					const percent = Math.floor((seconds / maxDuration) * 100);
+					const seconds = (timeParts[0] * 3600) + (timeParts[1] * 60) + parseInt(timeParts[2]);
+					const timey = seconds / maxDuration;
+					const percent = Math.floor(timey * 100);
 					if (progressCallback) {
 						progressCallback(percent);
 					}
